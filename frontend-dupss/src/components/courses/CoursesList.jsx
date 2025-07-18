@@ -1,127 +1,19 @@
 import { useState, useEffect } from 'react';
 import {
-  Box, Typography, Container, Card, CardMedia, CardContent, CardActions,
-  Button, Chip, TextField, MenuItem, InputAdornment, Pagination, CircularProgress
+  Box, Typography, Container, TextField, MenuItem, InputAdornment, Pagination, CircularProgress
 } from '@mui/material';
-import { Link } from 'react-router-dom';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SearchIcon from '@mui/icons-material/Search';
-import PersonIcon from '@mui/icons-material/Person';
-import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { API_URL } from '../../services/config';
-
-const FilterContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(2),
-  marginBottom: theme.spacing(4),
-  flexDirection: 'column',
-  padding: '24px',
-  background: 'rgba(15, 23, 42, 0.95)',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '16px',
-  border: '1px solid rgba(88, 166, 255, 0.2)',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-  [theme.breakpoints.up('sm')]: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  '& .MuiTextField-root': {
-    '& .MuiOutlinedInput-root': {
-      backgroundColor: 'rgba(30, 41, 59, 0.8)',
-      borderRadius: '12px',
-      '& fieldset': {
-        borderColor: 'rgba(88, 166, 255, 0.3)',
-        borderWidth: '1px',
-      },
-      '&:hover fieldset': {
-        borderColor: 'rgba(88, 166, 255, 0.6)',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#58a6ff',
-        borderWidth: '2px',
-      },
-      '& input': {
-        color: '#e2e8f0',
-        fontSize: '16px',
-      },
-      '& .MuiSelect-select': {
-        color: '#e2e8f0',
-        fontSize: '16px',
-      },
-      '& .MuiInputAdornment-root .MuiSvgIcon-root': {
-        color: 'rgba(88, 166, 255, 0.7)',
-      }
-    },
-    '& .MuiInputLabel-root': {
-      color: 'rgba(226, 232, 240, 0.7)',
-      fontSize: '16px',
-      '&.Mui-focused': {
-        color: '#58a6ff',
-      }
-    },
-    '& .MuiMenuItem-root': {
-      backgroundColor: 'rgba(30, 41, 59, 0.95)',
-      color: '#e2e8f0',
-      '&:hover': {
-        backgroundColor: 'rgba(88, 166, 255, 0.1)',
-      },
-      '&.Mui-selected': {
-        backgroundColor: 'rgba(88, 166, 255, 0.2)',
-        '&:hover': {
-          backgroundColor: 'rgba(88, 166, 255, 0.3)',
-        }
-      }
-    }
-  }
-}));
 
 const sortOptions = [
   { value: 'desc', label: 'Ngày đăng mới nhất' },
   { value: 'asc', label: 'Ngày đăng cũ nhất' },
 ];
 
-const GridWrapper = styled(Box)({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: '24px',
-  '@media (max-width: 900px)': {
-    gridTemplateColumns: 'repeat(2, 1fr)',
-  },
-  '@media (max-width: 600px)': {
-    gridTemplateColumns: '1fr',
-  }
-});
-
-const CourseCard = styled(Card)(({ theme }) => ({
-  backgroundColor: 'white',
-  borderRadius: '8px',
-  overflow: 'hidden',
-  boxShadow: '0 3px 10px rgba(0, 0, 0, 0.1)',
-  transition: 'transform 0.3s, box-shadow 0.3s',
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  '&:hover': {
-    transform: 'translateY(-8px)',
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-  }
-}));
-
-const LoadingOverlay = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: 'rgba(255, 255, 255, 0.7)',
-  zIndex: 2,
-}));
+const FilterContainer = Box;
+const LoadingOverlay = Box;
+const GridWrapper = Box;
 
 function CoursesList() {
   const [courses, setCourses] = useState([]);
@@ -251,7 +143,18 @@ function CoursesList() {
         Khóa học Lập trình
       </Typography>
 
-      <FilterContainer>
+      <FilterContainer sx={{
+        display: 'flex',
+        gap: 2,
+        mb: 4,
+        flexDirection: {xs: 'column', sm: 'row'},
+        p: 3,
+        bgcolor: 'rgba(15, 23, 42, 0.95)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: 2,
+        border: '1px solid rgba(88, 166, 255, 0.2)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+      }}>
         <TextField
           label="Tìm kiếm"
           variant="outlined"
@@ -284,19 +187,6 @@ function CoursesList() {
                   border: '1px solid rgba(88, 166, 255, 0.2)',
                   borderRadius: '12px',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                  '& .MuiMenuItem-root': {
-                    color: '#e2e8f0',
-                    fontSize: '16px',
-                    '&:hover': {
-                      backgroundColor: 'rgba(88, 166, 255, 0.1)',
-                    },
-                    '&.Mui-selected': {
-                      backgroundColor: 'rgba(88, 166, 255, 0.2)',
-                      '&:hover': {
-                        backgroundColor: 'rgba(88, 166, 255, 0.3)',
-                      }
-                    }
-                  }
                 }
               }
             }
@@ -326,19 +216,6 @@ function CoursesList() {
                   border: '1px solid rgba(88, 166, 255, 0.2)',
                   borderRadius: '12px',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                  '& .MuiMenuItem-root': {
-                    color: '#e2e8f0',
-                    fontSize: '16px',
-                    '&:hover': {
-                      backgroundColor: 'rgba(88, 166, 255, 0.1)',
-                    },
-                    '&.Mui-selected': {
-                      backgroundColor: 'rgba(88, 166, 255, 0.2)',
-                      '&:hover': {
-                        backgroundColor: 'rgba(88, 166, 255, 0.3)',
-                      }
-                    }
-                  }
                 }
               }
             }
@@ -355,112 +232,57 @@ function CoursesList() {
       {/* Courses Grid */}
       <Box sx={{ position: 'relative' }}>
         {loading && !initialLoad && (
-          <LoadingOverlay>
+          <LoadingOverlay sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            zIndex: 2,
+          }}>
             <CircularProgress size={40} />
           </LoadingOverlay>
         )}
         
         {courses.length > 0 ? (
           <>
-            <GridWrapper sx={{ opacity: loading ? 0.5 : 1 }}>
+            <div className="courses-grid" style={{ opacity: loading ? 0.5 : 1 }}>
               {courses.map((course) => (
-                <CourseCard key={course.id}>
-                  <Box sx={{ position: 'relative', paddingTop: '56.25%', overflow: 'hidden' }}>
-                    <CardMedia
-                      component="img"
-                      image={course.coverImage}
+                <div className="course-card" key={course.id}>
+                  <div className="course-image">
+                    <img
+                      src={course.coverImage || 'https://via.placeholder.com/300x200'}
                       alt={course.title}
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.5s',
-                        '&:hover': { transform: 'scale(1.05)' }
-                      }}
                     />
-                    <Chip
-                      label={course.topicName}
-                      color="primary"
-                      size="small"
-                      sx={{
-                        position: 'absolute',
-                        top: 16,
-                        right: 16,
-                        fontWeight: 500
-                      }}
-                    />
-                    <Chip
-                      icon={<AccessTimeIcon />}
-                      label={formatDuration(course.duration)}
-                      size="small"
-                      sx={{
-                        position: 'absolute',
-                        bottom: 16,
-                        left: 16,
-                        bgcolor: 'rgba(0, 0, 0, 0.7)',
-                        color: 'white',
-                        '& .MuiChip-icon': {
-                          color: 'white'
-                        }
-                      }}
-                    />
-                  </Box>
+                    <span className="course-tag">{course.topicName}</span>
+                    <span className="course-duration">
+                      <i className="fas fa-clock"></i> {formatDuration(course.duration)}
+                    </span>
+                  </div>
 
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography gutterBottom variant="h6" component="h2" sx={{
-                      height: '3.6em',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      fontSize: '1rem',
-                      lineHeight: 1.4,
-                      fontWeight: 'bold',
-                    }}>
-                      {course.title}
-                    </Typography>
+                  <div className="course-content">
+                    <h3>{course.title}</h3>
 
-                    <Box display="flex" justifyContent="space-between" mb={1.5}>
-                      <Typography variant="body2" color="text.secondary" display="flex" alignItems="center">
-                        <PersonIcon fontSize="small" sx={{ mr: 0.5 }} />
-                        {course.creatorName}
-                      </Typography>
-                    </Box>
+                    <div className="course-meta">
+                      <span>
+                        <i className="fas fa-user"></i> {course.creatorName}
+                      </span>
+                      <span>{new Date(course.createdAt).toLocaleDateString('vi-VN')}</span>
+                    </div>
 
-                    <Typography variant="body2" color="text.secondary" sx={{
-                      flexGrow: 1,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      mb: 2
-                    }}>
-                      {course.summary}
-                    </Typography>
-                  </CardContent>
+                    <p>{course.summary || 'Không có mô tả'}</p>
 
-                  <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-                    <Button
-                      component={Link}
-                      to={`/courses/${course.id}`}
-                      color="primary"
-                      endIcon={<ArrowForwardIcon />}
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      Tham gia
-                    </Button>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                      {new Date(course.createdAt).toLocaleDateString('vi-VN')}
-                    </Typography>
-                  </CardActions>
-                </CourseCard>
+                    <a href={`/courses/${course.id}`} className="course-btn">
+                      Tham gia khóa học
+                    </a>
+                  </div>
+                </div>
               ))}
-            </GridWrapper>
+            </div>
             
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
               <Pagination 
