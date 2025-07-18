@@ -6,6 +6,34 @@ import SearchIcon from '@mui/icons-material/Search';
 import axios from 'axios';
 import { API_URL } from '../../services/config';
 
+// Shared input styles for consistent white theme
+const inputStyles = {
+  '& .MuiOutlinedInput-root': {
+    color: 'white',
+    '& fieldset': {
+      borderColor: 'rgba(255, 255, 255, 0.5)',
+    },
+    '&:hover fieldset': {
+      borderColor: 'rgba(255, 255, 255, 0.8)',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: 'white',
+    },
+    '& .MuiSelect-icon': {
+      color: 'white',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: 'rgba(255, 255, 255, 0.7)',
+    '&.Mui-focused': {
+      color: 'white',
+    },
+  },
+  '& .MuiSvgIcon-root': {
+    color: 'white',
+  },
+};
+
 const sortOptions = [
   { value: 'desc', label: 'Ngày đăng mới nhất' },
   { value: 'asc', label: 'Ngày đăng cũ nhất' },
@@ -116,7 +144,7 @@ function CoursesList() {
   if (initialLoad) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
-        <CircularProgress />
+        <CircularProgress sx={{ color: 'white' }} />
       </Box>
     );
   }
@@ -152,7 +180,7 @@ function CoursesList() {
         bgcolor: 'rgba(15, 23, 42, 0.95)',
         backdropFilter: 'blur(20px)',
         borderRadius: 2,
-        border: '1px solid rgba(88, 166, 255, 0.2)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
       }}>
         <TextField
@@ -161,11 +189,14 @@ function CoursesList() {
           value={searchInput}
           onChange={handleSearchChange}
           fullWidth
-          sx={{ flexGrow: 1 }}
+          sx={{ 
+            flexGrow: 1,
+            ...inputStyles
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon />
+                <SearchIcon sx={{ color: 'white' }} />
               </InputAdornment>
             ),
           }}
@@ -177,16 +208,28 @@ function CoursesList() {
           value={topicId}
           onChange={handleTopicChange}
           variant="outlined"
-          sx={{ minWidth: 200 }}
+          sx={{ 
+            minWidth: 200,
+            ...inputStyles
+          }}
           SelectProps={{
             MenuProps: {
               PaperProps: {
                 sx: {
                   backgroundColor: 'rgba(15, 23, 42, 0.95)',
                   backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(88, 166, 255, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '12px',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  '& .MuiMenuItem-root': {
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    '&.Mui-selected': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    },
+                  },
                 }
               }
             }
@@ -206,16 +249,28 @@ function CoursesList() {
           value={sortDir}
           onChange={handleSortChange}
           variant="outlined"
-          sx={{ minWidth: 200 }}
+          sx={{ 
+            minWidth: 200,
+            ...inputStyles
+          }}
           SelectProps={{
             MenuProps: {
               PaperProps: {
                 sx: {
                   backgroundColor: 'rgba(15, 23, 42, 0.95)',
                   backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(88, 166, 255, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '12px',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  '& .MuiMenuItem-root': {
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    '&.Mui-selected': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    },
+                  },
                 }
               }
             }
@@ -292,12 +347,25 @@ function CoursesList() {
                 color="primary"
                 size="large"
                 disabled={loading}
+                sx={{ 
+                  '& .MuiPaginationItem-root': {
+                    color: 'white',
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                  },
+                  '& .MuiPaginationItem-page.Mui-selected': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                  },
+                  '& .MuiSvgIcon-root': {
+                    color: 'white',
+                  },
+                }}
               />
             </Box>
           </>
         ) : (
-          <Box sx={{ textAlign: 'center', my: 5 }}>
-            <Typography>Không tìm thấy khóa học nào phù hợp với tiêu chí tìm kiếm</Typography>
+          <Box sx={{ textAlign: 'center', my: 5, color: 'white' }}>
+            <Typography color="inherit">Không tìm thấy khóa học nào phù hợp với tiêu chí tìm kiếm</Typography>
           </Box>
         )}
       </Box>
