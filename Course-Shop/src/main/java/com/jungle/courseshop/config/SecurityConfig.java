@@ -40,6 +40,8 @@ public class SecurityConfig {
             // Auth endpoints
             "/api/auth/**",
             "/api/public/**",
+            //topics endpoints
+            "/api/topics/**",
             // Swagger endpoints
             "/swagger-ui/**",
             "/v3/api-docs/**",
