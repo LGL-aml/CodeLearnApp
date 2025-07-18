@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../services/config';
 
-
-
 const FeaturedCourses = () => {
   const [coursesData, setCoursesData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +10,8 @@ const FeaturedCourses = () => {
     const fetchCourses = async () => {
       try {
         const response = await axios.get(`${API_URL}/public/courses/latest`);
-        setCoursesData(response.data);
+        // Fix: Access the courses array from the data property of the response
+        setCoursesData(response.data.data || []);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching courses:', error);
@@ -73,7 +72,6 @@ const FeaturedCourses = () => {
               </div>
             ))
           )}
-
         </div>
 
         <div className="view-all">
