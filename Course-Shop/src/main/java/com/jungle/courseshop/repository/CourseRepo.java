@@ -11,12 +11,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CourseRepo extends JpaRepository<Course, Long> {
     List<Course> findByCreatorAndActiveTrue(User creator);
     List<Course> findTop3ByStatusAndActiveTrueOrderByCreatedAtDesc(ApprovalStatus status);
     List<Course> findByStatusAndActiveTrue(ApprovalStatus status);
+    Optional<Course> findByIdAndActiveTrue(Long id);
 
     @Query("SELECT c FROM Course c " +
             "WHERE c.status = com.dupss.app.BE_Dupss.entity.ApprovalStatus.APPROVED AND " +

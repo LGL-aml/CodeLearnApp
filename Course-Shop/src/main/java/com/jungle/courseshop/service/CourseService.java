@@ -9,6 +9,7 @@ import com.jungle.courseshop.dto.response.*;
 import com.jungle.courseshop.entity.*;
 import com.jungle.courseshop.exception.ResourceNotFoundException;
 import com.jungle.courseshop.repository.*;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -181,6 +182,22 @@ public class CourseService {
         return mapToCourseResponse(savedCourse, modules, currentUser);
     }
 
+    public void updateStatus(Long courseId, ApprovalStatus status) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User currentUser = userRepository.findByUsernameAndEnabledTrue(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Course course = courseRepository.findByIdAndActiveTrue(courseId)
+                .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + courseId));
+        if(course.getStatus().equals(ApprovalStatus.PENDING)) {
+            course.setStatus(status);
+        } else {
+            throw new RuntimeException("Blog đã được phê duyệt hoặc từ chối, không thể cập nhật trạng thái");
+        }
+        courseRepository.save(course);
+    }
+
     @Transactional
     public void softDeleteCourse(Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -300,6 +317,27 @@ public class CourseService {
         }
         return responses;
     }
+
+
+    public void deleteCourse(Long courseId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User currentUser = userRepository.findByUsernameAndEnabledTrue(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Course course = courseRepository.findByIdAndActiveTrue(courseId)
+                .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + courseId));
+
+
+        if (course.getCreator().getId() != currentUser.getId()) {
+            throw new AccessDeniedException("Bạn chỉ có thể xóa các khóa học của chính mình");
+        }
+
+        // Set course as inactive instead of deleting
+        course.setActive(false);
+        courseRepository.save(course);
+    }
+
 
     private CourseResponse mapToCourseResponse(Course course, List<CourseModule> modules, User currentUser) {
         List<CourseModuleResponse> moduleResponses = modules.stream()

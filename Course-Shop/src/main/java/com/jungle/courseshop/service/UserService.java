@@ -2,7 +2,10 @@ package com.jungle.courseshop.service;
 
 
 import com.jungle.courseshop.dto.request.RegisterRequest;
+import com.jungle.courseshop.dto.request.UpdateUserRequest;
 import com.jungle.courseshop.dto.response.RegisterResponse;
+import com.jungle.courseshop.dto.response.UpdateUserResponse;
+import com.jungle.courseshop.dto.response.UserDetailResponse;
 import com.jungle.courseshop.entity.Role;
 import com.jungle.courseshop.entity.User;
 import com.jungle.courseshop.repository.UserRepo;
@@ -11,13 +14,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -67,6 +75,7 @@ public class UserService implements CommandLineRunner {
     }
 
     public RegisterResponse createUser(RegisterRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Optional<User> byEmail = userRepo.findByEmail(request.getEmail());
         Optional<User> byUsername = userRepo.findByUsernameAndEnabledTrue(request.getUsername());
         if(byEmail.isPresent()) {
@@ -78,6 +87,18 @@ public class UserService implements CommandLineRunner {
 
         String imgUser = "https://freesvg.org/img/abstract-user-flat-3.png";
 
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        Role assignedRole = Role.MEMBER;
+        if (isAdmin && request.getRole() != null) {
+            assignedRole = request.getRole();
+        }else {
+            if (request.getRole() != null) {
+                throw new RuntimeException("Bạn không có quyền gán vai trò này");
+            }
+        }
+
         User user = User.builder()
                 .username(request.getUsername())
                 .fullname(request.getFullname())
@@ -88,7 +109,7 @@ public class UserService implements CommandLineRunner {
                 .phone(request.getPhone())
                 .address(request.getAddress())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.MEMBER)
+                .role(assignedRole)
                 .enabled(true)
                 .build();
 
@@ -107,6 +128,82 @@ public class UserService implements CommandLineRunner {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .build();
+    }
+
+
+    public UpdateUserResponse updateUserProfile(UpdateUserRequest request) throws IOException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepo.findByUsernameAndEnabledTrue(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với username: " + username));
+
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail()) &&
+                userRepo.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email đã tồn tại");
+        }
+
+        if (request.getFullname() != null) {
+            user.setFullname(request.getFullname());
+        }
+
+        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
+            String imageUrl = cloudinaryService.uploadFile(request.getAvatar());
+            user.setAvatar(imageUrl);
+        }
+
+        if (request.getGender() != null) {
+            user.setGender(request.getGender());
+        }
+        if (request.getYob() != null) {
+            user.setYob(request.getYob());
+        }
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        if (request.getAddress() != null) {
+            user.setAddress(request.getAddress());
+        }
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        if (request.getRole() != null) {
+            if (isAdmin) {
+                user.setRole(request.getRole());
+            } else {
+                throw new RuntimeException("Bạn không có quyền thay đổi vai trò người dùng");
+            }
+        }
+
+        User updatedUser = userRepo.save(user);
+        log.info("Admin updated user: {}", updatedUser.getUsername());
+
+        return UpdateUserResponse.builder()
+                .username(updatedUser.getUsername())
+                .fullname(updatedUser.getFullname())
+                .avatar(updatedUser.getAvatar())
+                .yob(updatedUser.getYob())
+                .gender(updatedUser.getGender())
+                .email(updatedUser.getEmail())
+                .phone(updatedUser.getPhone())
+                .address(updatedUser.getAddress())
+                .role(updatedUser.getRole())
+                .message("Cập nhật người dùng thành công")
+                .build();
+    }
+
+    public void deleteUser(Long userId) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + userId));
+
+        if(user.isEnabled()){
+            user.setEnabled(false);
+        }
+        userRepo.save(user);
+
+        log.info("Admin deleted user: {} with ID: {}", user.getUsername(), userId);
     }
 
 }

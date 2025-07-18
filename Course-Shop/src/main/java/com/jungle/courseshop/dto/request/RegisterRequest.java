@@ -1,6 +1,7 @@
 package com.jungle.courseshop.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.jungle.courseshop.entity.Role;
 import com.jungle.courseshop.validation.PasswordMatch;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
@@ -48,5 +49,7 @@ public class RegisterRequest {
     private String phone;
 
     private String address;
+
+    private Role role;
 
 }

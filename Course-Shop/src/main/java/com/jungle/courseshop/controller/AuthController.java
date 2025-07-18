@@ -1,6 +1,7 @@
 package com.jungle.courseshop.controller;
 
 import com.jungle.courseshop.dto.request.LoginRequest;
+import com.jungle.courseshop.dto.request.LogoutRequest;
 import com.jungle.courseshop.dto.request.RegisterRequest;
 import com.jungle.courseshop.dto.response.LoginResponse;
 import com.jungle.courseshop.dto.response.RegisterResponse;
@@ -17,6 +18,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.ParseException;
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -30,6 +35,14 @@ public class AuthController {
         LoginResponse response = authService.login(request);
         RestResponse<LoginResponse> apiResponse = new RestResponse<LoginResponse>(HttpStatus.OK.value(), null, "Login successfully", response);
         return ResponseEntity.ok().body(apiResponse);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(@RequestBody LogoutRequest request) throws ParseException {
+        authService.logout(request);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Đăng xuất thành công");
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register")
