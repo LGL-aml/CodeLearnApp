@@ -20,9 +20,7 @@ import {
   AccountCircle,
   Logout,
   Settings,
-  Code as CodeIcon,
-  School as SchoolIcon,
-  Analytics as AnalyticsIcon,
+  Topic as TopicIcon,
   Computer as ComputerIcon
 } from '@mui/icons-material';
 import { getUserInfo } from '../utils/auth';
@@ -71,8 +69,7 @@ const Header = ({ userName }) => {
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
     { text: 'Người Dùng', icon: <PeopleIcon />, path: '/admin/users' },
-    { text: 'Khóa Học', icon: <CodeIcon />, path: '/admin/courses' },
-    { text: 'Thống Kê', icon: <AnalyticsIcon />, path: '/admin/analytics' }
+    { text: 'Chủ Đề', icon: <TopicIcon />, path: '/admin/topics' }
   ];
 
   // Lấy chữ cái đầu tiên của tên người dùng để hiển thị trong Avatar nếu không có avatar
