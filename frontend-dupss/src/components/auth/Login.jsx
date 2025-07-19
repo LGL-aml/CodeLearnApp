@@ -269,7 +269,18 @@ const Login = () => {
                       padding: '12px 15px 12px 15px',
                       color: 'var(--text-primary)'
                     },
-                    bgcolor: 'var(--bg-tertiary)'
+                    bgcolor: 'var(--bg-tertiary)',
+                    // Override autofill styles
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                      caretColor: 'var(--text-primary)',
+                      borderRadius: 'inherit'
+                    },
+                    '& input:-webkit-autofill:focus': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                    }
                   },
                 }}
               />
@@ -325,7 +336,18 @@ const Login = () => {
                       padding: '12px 15px 12px 15px',
                       color: 'var(--text-primary)'
                     },
-                    bgcolor: 'var(--bg-tertiary)'
+                    bgcolor: 'var(--bg-tertiary)',
+                    // Override autofill styles
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                      caretColor: 'var(--text-primary)',
+                      borderRadius: 'inherit'
+                    },
+                    '& input:-webkit-autofill:focus': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                    }
                   },
                 }}
               />
@@ -439,9 +461,24 @@ const Login = () => {
             <Box sx={{ textAlign: 'center', marginTop: '20px' }}>
               <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
                 Chưa có tài khoản? {' '}
-                <Link component={RouterLink} to="/register" sx={{ color: 'var(--accent-primary)', fontWeight: 500, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+                <Button 
+                  component={RouterLink} 
+                  to="/register"
+                  variant="text"
+                  sx={{ 
+                    color: 'var(--accent-primary)', 
+                    fontWeight: 500, 
+                    textDecoration: 'none',
+                    padding: '0 4px',
+                    minWidth: 'auto',
+                    '&:hover': { 
+                      textDecoration: 'underline',
+                      backgroundColor: 'transparent'
+                    } 
+                  }}
+                >
                   Đăng ký ngay
-                </Link>
+                </Button>
               </Typography>
             </Box>
           </Box>

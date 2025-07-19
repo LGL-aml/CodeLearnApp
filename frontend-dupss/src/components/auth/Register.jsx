@@ -266,7 +266,18 @@ const Register = () => {
                     '&:hover fieldset': { borderColor: 'var(--accent-primary)' },
                     '&.Mui-focused fieldset': { borderColor: 'var(--accent-primary)' },
                     '& input': { color: 'var(--text-primary)' },
-                    bgcolor: 'var(--bg-tertiary)'
+                    bgcolor: 'var(--bg-tertiary)',
+                    // Override autofill styles
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                      caretColor: 'var(--text-primary)',
+                      borderRadius: 'inherit'
+                    },
+                    '& input:-webkit-autofill:focus': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                    }
                   }
                 }}
               />
@@ -302,7 +313,18 @@ const Register = () => {
                     '&:hover fieldset': { borderColor: 'var(--accent-primary)' },
                     '&.Mui-focused fieldset': { borderColor: 'var(--accent-primary)' },
                     '& input': { color: 'var(--text-primary)' },
-                    bgcolor: 'var(--bg-tertiary)'
+                    bgcolor: 'var(--bg-tertiary)',
+                    // Override autofill styles
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                      caretColor: 'var(--text-primary)',
+                      borderRadius: 'inherit'
+                    },
+                    '& input:-webkit-autofill:focus': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                    }
                   }
                 }}
               />
@@ -349,7 +371,18 @@ const Register = () => {
                     '&:hover fieldset': { borderColor: 'var(--accent-primary)' },
                     '&.Mui-focused fieldset': { borderColor: 'var(--accent-primary)' },
                     '& input': { color: 'var(--text-primary)' },
-                    bgcolor: 'var(--bg-tertiary)'
+                    bgcolor: 'var(--bg-tertiary)',
+                    // Override autofill styles
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                      caretColor: 'var(--text-primary)',
+                      borderRadius: 'inherit'
+                    },
+                    '& input:-webkit-autofill:focus': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                    }
                   }
                 }}
               />
@@ -396,7 +429,18 @@ const Register = () => {
                     '&:hover fieldset': { borderColor: 'var(--accent-primary)' },
                     '&.Mui-focused fieldset': { borderColor: 'var(--accent-primary)' },
                     '& input': { color: 'var(--text-primary)' },
-                    bgcolor: 'var(--bg-tertiary)'
+                    bgcolor: 'var(--bg-tertiary)',
+                    // Override autofill styles
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                      caretColor: 'var(--text-primary)',
+                      borderRadius: 'inherit'
+                    },
+                    '& input:-webkit-autofill:focus': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                    }
                   }
                 }}
               />
@@ -431,7 +475,18 @@ const Register = () => {
                     '&:hover fieldset': { borderColor: 'var(--accent-primary)' },
                     '&.Mui-focused fieldset': { borderColor: 'var(--accent-primary)' },
                     '& input': { color: 'var(--text-primary)' },
-                    bgcolor: 'var(--bg-tertiary)'
+                    bgcolor: 'var(--bg-tertiary)',
+                    // Override autofill styles
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                      caretColor: 'var(--text-primary)',
+                      borderRadius: 'inherit'
+                    },
+                    '& input:-webkit-autofill:focus': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                    }
                   }
                 }}
               />
@@ -466,7 +521,18 @@ const Register = () => {
                     '&:hover fieldset': { borderColor: 'var(--accent-primary)' },
                     '&.Mui-focused fieldset': { borderColor: 'var(--accent-primary)' },
                     '& input': { color: 'var(--text-primary)' },
-                    bgcolor: 'var(--bg-tertiary)'
+                    bgcolor: 'var(--bg-tertiary)',
+                    // Override autofill styles
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                      caretColor: 'var(--text-primary)',
+                      borderRadius: 'inherit'
+                    },
+                    '& input:-webkit-autofill:focus': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                    }
                   }
                 }}
               />
@@ -504,7 +570,18 @@ const Register = () => {
                     '&:hover fieldset': { borderColor: 'var(--accent-primary)' },
                     '&.Mui-focused fieldset': { borderColor: 'var(--accent-primary)' },
                     '& input': { color: 'var(--text-primary)' },
-                    bgcolor: 'var(--bg-tertiary)'
+                    bgcolor: 'var(--bg-tertiary)',
+                    // Override autofill styles
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                      caretColor: 'var(--text-primary)',
+                      borderRadius: 'inherit'
+                    },
+                    '& input:-webkit-autofill:focus': {
+                      WebkitBoxShadow: '0 0 0 1000px var(--bg-tertiary) inset',
+                      WebkitTextFillColor: 'var(--text-primary)',
+                    }
                   }
                 }}
               />
@@ -633,7 +710,25 @@ const Register = () => {
 
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
-                Đã có tài khoản? <Link component={RouterLink} to="/login" sx={{ color: 'var(--accent-primary)', fontWeight: 500, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Đăng nhập ngay</Link>
+                Đã có tài khoản? {' '}
+                <Button 
+                  component={RouterLink} 
+                  to="/login"
+                  variant="text"
+                  sx={{ 
+                    color: 'var(--accent-primary)', 
+                    fontWeight: 500, 
+                    textDecoration: 'none',
+                    padding: '0 4px',
+                    minWidth: 'auto',
+                    '&:hover': { 
+                      textDecoration: 'underline',
+                      backgroundColor: 'transparent'
+                    } 
+                  }}
+                >
+                  Đăng nhập ngay
+                </Button>
               </Typography>
             </Box>
           </Box>
