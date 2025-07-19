@@ -23,8 +23,14 @@ import { login } from '../../services/authService';
 import { submitSurveyResult } from '../../services/surveyService';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  });
+  const [errors, setErrors] = useState({
+    username: '',
+    password: ''
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -108,11 +114,46 @@ const Login = () => {
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
+  };
+
+  const validateForm = () => {
+    let tempErrors = {};
+    let isValid = true;
+
+    // Validate username
+    if (!formData.username.trim()) {
+      tempErrors.username = 'Vui lòng nhập tên đăng nhập';
+      isValid = false;
+    }
+
+    // Validate password
+    if (!formData.password) {
+      tempErrors.password = 'Vui lòng nhập mật khẩu';
+      isValid = false;
+    }
+
+    setErrors(tempErrors);
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!username || !password) {
-      showErrorAlert('Vui lòng nhập đầy đủ thông tin đăng nhập');
+    if (!validateForm()) {
       return;
     }
     
@@ -120,7 +161,7 @@ const Login = () => {
     
     try {
       // Use the login function from authService with the required credentials
-      const userData = await login({ username, password });
+      const userData = await login({ username: formData.username, password: formData.password });
       console.log('Login successful, userData:', userData);
       
       showSuccessAlert('Đăng nhập thành công!');
@@ -152,6 +193,11 @@ const Login = () => {
       } else {
         // For any other errors, assume it's related to credentials
         showErrorAlert('Username hoặc Mật khẩu sai!');
+        // Show error on both fields for credential errors
+        setErrors({
+          username: 'Thông tin đăng nhập không chính xác',
+          password: 'Thông tin đăng nhập không chính xác'
+        });
       }
     } finally {
       setIsLoading(false);
@@ -192,14 +238,15 @@ const Login = () => {
           <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: '400px', margin: '0 auto' }}>
             <Box sx={{ marginBottom: '20px' }}>
               <Typography variant="subtitle1" sx={{ marginBottom: '8px', fontWeight: 500, color: 'var(--text-primary)' }}>
-                Username
+                Username <span style={{ color: 'var(--accent-error)' }}>*</span>
               </Typography>
               <TextField
                 fullWidth
+                name="username"
                 placeholder="Nhập username của bạn"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
+                value={formData.username}
+                onChange={handleChange}
+                error={!!errors.username}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -226,19 +273,25 @@ const Login = () => {
                   },
                 }}
               />
+              {errors.username && (
+                <Typography variant="caption" sx={{ color: 'var(--accent-error)', mt: 1, display: 'block' }}>
+                  {errors.username}
+                </Typography>
+              )}
             </Box>
 
             <Box sx={{ marginBottom: '20px' }}>
               <Typography variant="subtitle1" sx={{ marginBottom: '8px', fontWeight: 500, color: 'var(--text-primary)' }}>
-                Mật khẩu
+                Mật khẩu <span style={{ color: 'var(--accent-error)' }}>*</span>
               </Typography>
               <TextField
                 fullWidth
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Nhập mật khẩu của bạn"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+                value={formData.password}
+                onChange={handleChange}
+                error={!!errors.password}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -276,6 +329,11 @@ const Login = () => {
                   },
                 }}
               />
+              {errors.password && (
+                <Typography variant="caption" sx={{ color: 'var(--accent-error)', mt: 1, display: 'block' }}>
+                  {errors.password}
+                </Typography>
+              )}
             </Box>
 
             <Box sx={{ 
