@@ -197,19 +197,36 @@ export default api;
 
 // Các hàm helpers cho authentication
 export const login = async (credentials) => {
-  const response = await axios.post(`${API_URL}/auth/login`, credentials);
-  const { accessToken, refreshToken } = response.data;
-  
-  localStorage.setItem('accessToken', accessToken);
-  localStorage.setItem('refreshToken', refreshToken);
-  
-  // Lưu thời gian hết hạn của token mới
-  const decodedToken = parseJwt(accessToken);
-  if (decodedToken && decodedToken.exp) {
-    tokenExpiryTime = decodedToken.exp * 1000;
+  try {
+    console.log('Login request started with credentials:', credentials);
+    const response = await axios.post(`${API_URL}/auth/login`, credentials);
+    console.log('Login API response:', response.data);
+    
+    // Extract tokens from the new response structure
+    const { accessToken, refreshToken } = response.data.data;
+    console.log('Extracted tokens - accessToken exists:', !!accessToken, 'refreshToken exists:', !!refreshToken);
+    
+    // Store tokens in localStorage
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    
+    // Verify tokens were stored
+    const storedAccessToken = localStorage.getItem('accessToken');
+    const storedRefreshToken = localStorage.getItem('refreshToken');
+    console.log('Stored tokens - accessToken exists:', !!storedAccessToken, 'refreshToken exists:', !!storedRefreshToken);
+    
+    // Lưu thời gian hết hạn của token mới
+    const decodedToken = parseJwt(accessToken);
+    if (decodedToken && decodedToken.exp) {
+      tokenExpiryTime = decodedToken.exp * 1000;
+    }
+    
+    console.log('Login successful, tokens stored in localStorage');
+    return response.data;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
   }
-  
-  return response.data;
 };
 
 export const logout = () => {

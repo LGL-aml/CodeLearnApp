@@ -15,7 +15,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import GoogleIcon from '@mui/icons-material/Google';
+import CodeIcon from '@mui/icons-material/Code';
 import { Link as RouterLink } from 'react-router-dom';
 import { showSuccessAlert, showErrorAlert } from '../common/AlertNotification';
 import styles from './Login.module.css';
@@ -37,7 +37,7 @@ const Login = () => {
   const sessionExpired = location.state?.sessionExpired;
 
   useEffect(() => {
-    document.title = "Đăng Nhập - DUPSS";
+    document.title = "Đăng Nhập - CodeLearn";
     
     // If there's an alert message, display it in the top right corner via AlertNotification component
     if (authAlert && authMessage) {
@@ -119,8 +119,9 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      // Use the login function from authService
+      // Use the login function from authService with the required credentials
       const userData = await login({ username, password });
+      console.log('Login successful, userData:', userData);
       
       showSuccessAlert('Đăng nhập thành công!');
       
@@ -133,15 +134,15 @@ const Login = () => {
       if (redirectAfterLogin) {
         // Clear the redirect URL from sessionStorage
         sessionStorage.removeItem('redirectAfterLogin');
-        // Navigate to the saved URL
-        window.location.href = redirectAfterLogin;
+        // Navigate to the saved URL using navigate instead of window.location
+        navigate(redirectAfterLogin);
       } 
       // If there's a returnUrl, redirect to that URL after successful login
       else if (returnUrl) {
-        window.location.href = returnUrl;
+        navigate(returnUrl);
       } else {
         // If not, redirect to the homepage
-        window.location.href = '/';
+        navigate('/');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -161,11 +162,6 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleGoogleLogin = () => {
-    console.log('Google login clicked');
-    // Placeholder for Google login functionality
-  };
-
   return (
     <Box className={styles.loginSection}>
       <Card sx={{
@@ -175,25 +171,27 @@ const Login = () => {
         display: 'flex',
         borderRadius: '10px',
         overflow: 'hidden',
-        boxShadow: '0 5px 20px rgba(0, 0, 0, 0.1)'
+        boxShadow: '0 5px 20px var(--shadow-primary)',
+        bgcolor: 'var(--bg-secondary)'
       }}>
         {/* Left side - Login Form */}
         <Box sx={{
           flex: 1,
-          padding: '40px'
+          padding: '40px',
+          bgcolor: 'var(--bg-secondary)'
         }}>
           <Box sx={{ textAlign: 'center', marginBottom: '30px' }}>
-            <Typography variant="h4" component="h1" sx={{ marginBottom: '10px', color: '#0056b3', fontWeight: 600 }}>
+            <Typography variant="h4" component="h1" sx={{ marginBottom: '10px', color: 'var(--accent-primary)', fontWeight: 600 }}>
               Đăng nhập
             </Typography>
-            <Typography variant="body1" sx={{ color: '#666' }}>
-              Chào mừng bạn quay trở lại với DUPSS
+            <Typography variant="body1" sx={{ color: 'var(--text-secondary)' }}>
+              Chào mừng bạn đến với CodeLearn - Học Lập Trình Miễn Phí
             </Typography>
           </Box>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: '400px', margin: '0 auto' }}>
             <Box sx={{ marginBottom: '20px' }}>
-              <Typography variant="subtitle1" sx={{ marginBottom: '8px', fontWeight: 500, color: '#555' }}>
+              <Typography variant="subtitle1" sx={{ marginBottom: '8px', fontWeight: 500, color: 'var(--text-primary)' }}>
                 Username
               </Typography>
               <TextField
@@ -205,31 +203,33 @@ const Login = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonIcon sx={{ color: '#aaa' }} />
+                      <PersonIcon sx={{ color: 'var(--text-muted)' }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
-                      borderColor: '#ddd',
+                      borderColor: 'var(--border-primary)',
                     },
                     '&:hover fieldset': {
-                      borderColor: '#0056b3',
+                      borderColor: 'var(--accent-primary)',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#0056b3',
+                      borderColor: 'var(--accent-primary)',
                     },
                     '& input': {
                       padding: '12px 15px 12px 15px',
+                      color: 'var(--text-primary)'
                     },
+                    bgcolor: 'var(--bg-tertiary)'
                   },
                 }}
               />
             </Box>
 
             <Box sx={{ marginBottom: '20px' }}>
-              <Typography variant="subtitle1" sx={{ marginBottom: '8px', fontWeight: 500, color: '#555' }}>
+              <Typography variant="subtitle1" sx={{ marginBottom: '8px', fontWeight: 500, color: 'var(--text-primary)' }}>
                 Mật khẩu
               </Typography>
               <TextField
@@ -242,7 +242,7 @@ const Login = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockIcon sx={{ color: '#aaa' }} />
+                      <LockIcon sx={{ color: 'var(--text-muted)' }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -250,6 +250,7 @@ const Login = () => {
                       <IconButton
                         onClick={togglePasswordVisibility}
                         edge="end"
+                        sx={{ color: 'var(--text-muted)' }}
                       >
                         {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </IconButton>
@@ -259,17 +260,19 @@ const Login = () => {
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
-                      borderColor: '#ddd',
+                      borderColor: 'var(--border-primary)',
                     },
                     '&:hover fieldset': {
-                      borderColor: '#0056b3',
+                      borderColor: 'var(--accent-primary)',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#0056b3',
+                      borderColor: 'var(--accent-primary)',
                     },
                     '& input': {
                       padding: '12px 15px 12px 15px',
+                      color: 'var(--text-primary)'
                     },
+                    bgcolor: 'var(--bg-tertiary)'
                   },
                 }}
               />
@@ -280,7 +283,7 @@ const Login = () => {
               justifyContent: 'flex-end', 
               marginBottom: '20px'
             }}>
-              <Link component={RouterLink} to="/forgot-password" variant="body2" sx={{ color: '#0056b3', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+              <Link component={RouterLink} to="/forgot-password" variant="body2" sx={{ color: 'var(--accent-primary)', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
                 Quên mật khẩu?
               </Link>
             </Box>
@@ -292,9 +295,9 @@ const Login = () => {
               disabled={isLoading}
               sx={{
                 padding: '12px',
-                backgroundColor: '#0056b3',
+                backgroundColor: 'var(--accent-primary)',
                 '&:hover': {
-                  backgroundColor: '#003d82',
+                  backgroundColor: 'var(--accent-secondary)',
                 },
                 textTransform: 'none',
                 fontSize: '1rem',
@@ -329,7 +332,7 @@ const Login = () => {
                 left: 0,
                 width: 'calc(50% - 70px)',
                 height: '1px',
-                backgroundColor: '#ddd'
+                backgroundColor: 'var(--border-primary)'
               },
               '&::after': {
                 content: '""',
@@ -338,15 +341,15 @@ const Login = () => {
                 right: 0,
                 width: 'calc(50% - 70px)',
                 height: '1px',
-                backgroundColor: '#ddd'
+                backgroundColor: 'var(--border-primary)'
               }
             }}>
               <Typography variant="body2" sx={{ 
                 display: 'inline-block',
                 padding: '0 15px',
-                backgroundColor: 'white',
+                backgroundColor: 'var(--bg-secondary)',
                 position: 'relative',
-                color: '#777',
+                color: 'var(--text-muted)',
                 fontSize: '0.9rem'
               }}>
                 Hoặc đăng nhập bằng
@@ -359,27 +362,26 @@ const Login = () => {
               <Button 
                 fullWidth 
                 variant="outlined"
-                onClick={handleGoogleLogin}
-                startIcon={<GoogleIcon />}
+                startIcon={<CodeIcon />}
                 sx={{
-                  color: '#DB4437',
-                  borderColor: '#ddd',
+                  color: 'var(--accent-primary)',
+                  borderColor: 'var(--border-primary)',
                   padding: '10px',
                   '&:hover': {
-                    backgroundColor: '#fef0ef',
-                    borderColor: '#DB4437',
+                    backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                    borderColor: 'var(--accent-primary)',
                   },
                   textTransform: 'none',
                 }}
               >
-                Google
+                GitHub
               </Button>
             </Box>
 
             <Box sx={{ textAlign: 'center', marginTop: '20px' }}>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
                 Chưa có tài khoản? {' '}
-                <Link component={RouterLink} to="/register" sx={{ color: '#0056b3', fontWeight: 500, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+                <Link component={RouterLink} to="/register" sx={{ color: 'var(--accent-primary)', fontWeight: 500, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
                   Đăng ký ngay
                 </Link>
               </Typography>
@@ -395,8 +397,8 @@ const Login = () => {
         }}>
           <Box
             component="img"
-            src="https://static.scientificamerican.com/sciam/cache/file/BC2412FA-1388-43B7-877759A80E201C16_source.jpg"
-            alt="Phòng chống ma túy"
+            src="https://techcrunch.com/wp-content/uploads/2015/04/codecode.jpg?w=1024"
+            alt="Lập trình"
             sx={{
               width: '100%',
               height: '100%',
@@ -422,13 +424,13 @@ const Login = () => {
               marginBottom: '20px',
               fontWeight: 600,
             }}>
-              Chung tay xây dựng cộng đồng lành mạnh
+              Học lập trình cùng chuyên gia
             </Typography>
             <Typography variant="body1" sx={{ 
               color: 'white',
               fontSize: '1.1rem'
             }}>
-              Đăng nhập để tham gia các khóa học và hoạt động phòng chống ma túy cùng DUPSS
+              Đăng nhập để truy cập các khóa học và tài liệu chất lượng cao về lập trình
             </Typography>
           </Box>
         </Box>

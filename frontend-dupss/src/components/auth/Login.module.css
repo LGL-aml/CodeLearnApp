@@ -1,7 +1,10 @@
 /* Login Page Styles */
 .loginSection {
   padding: 60px 0;
-  background-color: #f8f9fa;
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(88, 166, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(31, 111, 235, 0.1) 0%, transparent 50%);
   min-height: calc(100vh - 300px);
   display: flex;
   align-items: center;

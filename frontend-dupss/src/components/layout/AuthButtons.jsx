@@ -6,6 +6,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import LockIcon from '@mui/icons-material/Lock';
 import { styled } from '@mui/material/styles';
 import { API_URL } from '../../services/config';
+import { getUserData, isAuthenticated } from '../../services/authService';
 
 // Create custom MenuItem component, override default styles
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -67,11 +68,7 @@ const AuthButtons = () => {
   // Kiểm tra trạng thái đăng nhập mỗi khi URL thay đổi
   useEffect(() => {
     // Kiểm tra token mỗi khi URL thay đổi
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      setIsLoggedIn(false);
-      setUserData(null);
-    }
+    checkAuthStatus();
     
     // Nếu đang ở trang đăng nhập, đảm bảo rằng trạng thái đăng nhập được reset
     if (location.pathname === '/login') {
@@ -83,88 +80,43 @@ const AuthButtons = () => {
     }
   }, [location]);
 
-  const checkAuthStatus = async () => {
-    const accessToken = localStorage.getItem('accessToken');
+  const checkAuthStatus = () => {
+    // Skip auth check on login page to prevent loops
+    if (location.pathname === '/login') {
+      return;
+    }
+
+    // Check if user is authenticated using the function from authService
+    const authenticated = isAuthenticated();
+    console.log('AuthButtons checkAuthStatus - isAuthenticated:', authenticated);
     
-    if (!accessToken) {
+    if (!authenticated) {
       setIsLoggedIn(false);
       setUserData(null);
       return;
     }
 
     try {
-      const response = await fetch(`${API_URL}/auth/me`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ accessToken }),
-      });
-
-      if (response.status === 200) {
-        const userData = await response.json();
-        setUserData(userData);
+      // Get user data from the JWT token using the function from authService
+      const userInfo = getUserData();
+      console.log('AuthButtons checkAuthStatus - userData:', userInfo);
+      
+      if (userInfo) {
+        setUserData(userInfo);
         setIsLoggedIn(true);
-      } else if (response.status === 401) {
-        await refreshToken();
       } else {
-        handleLogout();
+        setIsLoggedIn(false);
+        setUserData(null);
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
-      handleLogout();
-    }
-  };
-
-  const refreshToken = async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    
-    if (!refreshToken) {
-      handleLogout();
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/auth/refresh-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (response.status === 200) {
-        const data = await response.json();
-        localStorage.setItem('accessToken', data.accessToken);
-        
-        // Retry fetching user data with the new token
-        await checkAuthStatus();
-      } else {
-        handleLogout();
-      }
-    } catch (error) {
-      console.error('Error refreshing token:', error);
-      handleLogout();
+      setIsLoggedIn(false);
+      setUserData(null);
     }
   };
 
   const handleLogout = () => {
-    const accessToken = localStorage.getItem('accessToken');
-    
-    // Call logout API
-    if (accessToken) {
-      fetch(`${API_URL}/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ accessToken }),
-      }).catch(error => {
-        console.error('Error during logout:', error);
-      });
-    }
-    
-    // Don't wait for API response, directly clear local tokens
+    // Don't make an API call, just clear local tokens
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     setIsLoggedIn(false);
@@ -212,14 +164,14 @@ const AuthButtons = () => {
               cursor: 'pointer',
               padding: '6px 15px',
               borderRadius: '4px',
-              border: '1px solid #dddddd',
-              backgroundColor: '#ffffff',
-              '&:hover': { backgroundColor: 'rgba(0,0,0,0.02)' }
+              border: '1px solid var(--border-primary)',
+              backgroundColor: 'var(--bg-tertiary)',
+              '&:hover': { backgroundColor: 'var(--bg-card)' }
             }}
           >
             <Avatar 
               src={userData?.avatar} 
-              alt={userData?.fullName || 'User'} 
+              alt={userData?.username || 'User'} 
               sx={{ 
                 width: 36, 
                 height: 36, 
@@ -230,11 +182,11 @@ const AuthButtons = () => {
               variant="body1" 
               sx={{ 
                 fontWeight: 500,
-                color: '#333333',
+                color: 'var(--text-primary)',
                 fontSize: '1rem'
               }}
             >
-              {userData?.fullName || userData?.username || 'User'}
+              {userData?.username || 'User'}
             </Typography>
           </Box>
           <Menu
@@ -251,6 +203,8 @@ const AuthButtons = () => {
             }}
             PaperProps={{
               sx: {
+                backgroundColor: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
                 '& .MuiList-root': {
                   paddingTop: 0,
                   paddingBottom: 0
