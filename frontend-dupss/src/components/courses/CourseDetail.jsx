@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Box, Container, Typography, Button, Grid, Paper, Divider, 
-         List, ListItem, ListItemIcon, ListItemText, Avatar, Chip, styled, Alert, Snackbar, CircularProgress, LinearProgress } from '@mui/material';
+         List, ListItem, ListItemIcon, ListItemText, Avatar, Chip, styled, Alert, Snackbar, CircularProgress, LinearProgress, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import VideocamIcon from '@mui/icons-material/Videocam';
@@ -9,10 +9,13 @@ import PeopleIcon from '@mui/icons-material/People';
 import PersonIcon from '@mui/icons-material/Person';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import TimelineIcon from '@mui/icons-material/Timeline';
-import api, { isAuthenticated, getUserData } from '../../services/authService';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import { isAuthenticated, getUserData } from '../../services/authService';
 import axios from 'axios';
+import { API_URL } from '../../services/config';
 
-// Styled components to match the original HTML/CSS
+// Styled components to match the dark theme
 const CourseDetailWrapper = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexWrap: 'wrap',
@@ -25,6 +28,7 @@ const CourseDetailWrapper = styled(Box)(({ theme }) => ({
 const CourseInfoSection = styled(Box)(({ theme }) => ({
   flex: 1,
   minWidth: '300px',
+  color: 'var(--text-primary)'
 }));
 
 const CourseSidebar = styled(Box)(({ theme }) => ({
@@ -37,10 +41,10 @@ const CourseSidebar = styled(Box)(({ theme }) => ({
 }));
 
 const CoursePreview = styled(Paper)(({ theme }) => ({
-  backgroundColor: 'white',
+  backgroundColor: 'var(--bg-secondary)',
   borderRadius: '8px',
   overflow: 'hidden',
-  boxShadow: '0 5px 20px rgba(0, 0, 0, 0.1)',
+  boxShadow: '0 5px 20px var(--shadow-primary)',
   position: 'sticky',
   top: '20px',
 }));
@@ -53,7 +57,7 @@ const FeatureItem = styled(ListItem)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   marginBottom: theme.spacing(1.5),
-  color: '#555',
+  color: 'var(--text-primary)',
   paddingLeft: 0,
   paddingRight: 0,
 }));
@@ -61,7 +65,7 @@ const FeatureItem = styled(ListItem)(({ theme }) => ({
 const EnrollButton = styled(Button)(({ theme, status }) => ({
   width: '100%',
   padding: '15px',
-  backgroundColor: '#3498db',
+  backgroundColor: 'var(--accent-primary)',
   color: 'white',
   border: 'none',
   borderRadius: '4px',
@@ -71,14 +75,14 @@ const EnrollButton = styled(Button)(({ theme, status }) => ({
   transition: 'background-color 0.3s ease',
   marginTop: theme.spacing(1),
   '&:hover': {
-    backgroundColor: '#2980b9',
+    backgroundColor: 'var(--accent-secondary)',
   },
 }));
 
 const CertificateButton = styled(Button)(({ theme }) => ({
   width: '100%',
   padding: '15px',
-  backgroundColor: '#27ae60',
+  backgroundColor: 'var(--accent-success)',
   color: 'white',
   border: 'none',
   borderRadius: '4px',
@@ -89,6 +93,24 @@ const CertificateButton = styled(Button)(({ theme }) => ({
   marginTop: theme.spacing(1),
   '&:hover': {
     backgroundColor: '#219653',
+  },
+}));
+
+const ModuleAccordion = styled(Accordion)(({ theme }) => ({
+  backgroundColor: 'var(--bg-tertiary)',
+  color: 'var(--text-primary)',
+  borderRadius: '4px',
+  marginBottom: '8px',
+  boxShadow: '0 2px 5px var(--shadow-primary)',
+  '&:before': {
+    display: 'none',
+  },
+  '& .MuiAccordionSummary-root': {
+    padding: '8px 16px',
+  },
+  '& .MuiAccordionDetails-root': {
+    padding: '8px 16px 16px',
+    borderTop: `1px solid var(--border-primary)`,
   },
 }));
 
@@ -106,6 +128,7 @@ function CourseDetail() {
   const [userId, setUserId] = useState(null);
   const [courseDetail, setCourseDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [expandedModule, setExpandedModule] = useState(false);
 
   useEffect(() => {
     // Check if there is state passed through navigation
@@ -119,18 +142,35 @@ function CourseDetail() {
     }
   }, [location.state]);
 
+  const handleModuleChange = (moduleId) => (event, isExpanded) => {
+    setExpandedModule(isExpanded ? moduleId : false);
+  };
+
   useEffect(() => {
     const fetchCourse = async () => {
       try {
         setLoading(true);
-        // Use api instance instead of axios directly
-        // No need to add Authorization header as api instance does it automatically
-        const response = await api.get(`/public/course/${id}`);
-        setCourse(response.data);
         
-        // Nếu đã đăng nhập và trạng thái khóa học là IN_PROGRESS hoặc COMPLETED, lấy thông tin chi tiết
-        if (isAuthenticated() && (response.data.status === 'IN_PROGRESS' || response.data.status === 'COMPLETED')) {
-          fetchCourseDetail();
+        // Chuẩn bị headers với accessToken nếu có
+        const headers = {};
+        const accessToken = localStorage.getItem('accessToken');
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        
+        // Use axios to call the new API endpoint with authorization header
+        const response = await axios.get(`${API_URL}/public/course/${id}`, { headers });
+        
+        // Extract data from the nested structure
+        if (response.data && response.data.data) {
+          setCourse(response.data.data);
+          
+          // If user is authenticated and course status is IN_PROGRESS or COMPLETED, fetch details
+          if (isAuthenticated() && (response.data.data.status === 'IN_PROGRESS' || response.data.data.status === 'COMPLETED')) {
+            fetchCourseDetail();
+          }
+        } else {
+          throw new Error('Invalid response format');
         }
       } catch (err) {
         console.error('Error fetching course:', err);
@@ -147,8 +187,15 @@ function CourseDetail() {
   const fetchCourseDetail = async () => {
     try {
       setLoadingDetail(true);
-      const response = await api.get(`/courses/detail/${id}`);
-      setCourseDetail(response.data);
+      const response = await axios.get(`${API_URL}/courses/detail/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+      
+      if (response.data && response.data.data) {
+        setCourseDetail(response.data.data);
+      }
     } catch (err) {
       console.error('Error fetching course detail:', err);
       // Không hiển thị lỗi đến người dùng vì đây là tính năng bổ sung
@@ -202,8 +249,11 @@ function CourseDetail() {
       
       // Call API to enroll in the course
       try {
-        // Use api instance instead of axios directly
-        await api.post(`/courses/${id}/enroll`);
+        await axios.post(`${API_URL}/courses/${id}/enroll`, {}, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          }
+        });
 
         // Show success message
         showAlert('Tham gia khóa học thành công!', 'success');
@@ -235,14 +285,10 @@ function CourseDetail() {
     // Lấy userId từ token JWT thông qua hàm getUserData
     const userInfo = getUserData();
     
-    console.log('User info from JWT:', userInfo);
-    
     if (!userInfo || !userInfo.id) {
       showAlert('Vui lòng đăng nhập để xem chứng chỉ', 'error');
       return;
     }
-    
-    console.log('Final User ID for certificate:', userInfo.id);
     
     // Điều hướng đến trang chứng chỉ với courseId và userId
     navigate(`/courses/${id}/cert/${userInfo.id}`);
@@ -268,7 +314,7 @@ function CourseDetail() {
 
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-      <Typography>Đang tải...</Typography>
+      <CircularProgress color="primary" />
     </Box>;
   }
 
@@ -288,7 +334,7 @@ function CourseDetail() {
         sx={{ 
           '& .MuiPaper-root': { 
             width: '400px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+            boxShadow: '0 4px 20px var(--shadow-primary)'
           }
         }}
       >
@@ -322,8 +368,8 @@ function CourseDetail() {
             sx={{ 
               mb: 2, 
               fontWeight: 500,
-              bgcolor: '#e9f5ff',
-              color: '#0056b3',
+              bgcolor: 'var(--accent-primary)',
+              color: 'white',
               borderRadius: '4px',
               fontSize: '0.9rem',
             }}
@@ -333,16 +379,50 @@ function CourseDetail() {
             variant="h4" 
             component="h1" 
             gutterBottom
-            sx={{ fontWeight: 700, mb: 2.5, color: '#2c3e50', lineHeight: 1.3 }}
+            sx={{ fontWeight: 700, mb: 2.5, color: 'var(--text-primary)', lineHeight: 1.3 }}
           >
             {course.title}
           </Typography>
           
           <Box sx={{ mb: 4 }}>
-            <Typography variant="h5" gutterBottom sx={{ color: '#0056b3', fontWeight: 600, mb: 1.5, paddingBottom: 0.5, paddingTop: 2.5, borderTop: '1px solid #eee' }}>
+            <Typography variant="h5" gutterBottom sx={{ color: 'var(--accent-primary)', fontWeight: 600, mb: 1.5, paddingBottom: 0.5, paddingTop: 2.5, borderTop: `1px solid var(--border-primary)` }}>
               Nội dung khóa học
             </Typography>
-            <div dangerouslySetInnerHTML={{ __html: course.content }} style={{ color: '#333', lineHeight: 1.7 }} />
+            <div dangerouslySetInnerHTML={{ __html: course.content }} style={{ color: 'var(--text-primary)', lineHeight: 1.7 }} />
+          </Box>
+
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h5" gutterBottom sx={{ color: 'var(--accent-primary)', fontWeight: 600, mb: 1.5, paddingBottom: 0.5, paddingTop: 2.5, borderTop: `1px solid var(--border-primary)` }}>
+              Các phần học
+            </Typography>
+            
+            {course.modules && course.modules.map((module) => (
+              <ModuleAccordion 
+                key={module.id}
+                expanded={expandedModule === module.id}
+                onChange={handleModuleChange(module.id)}
+              >
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={{ color: 'var(--accent-primary)' }} />}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <MenuBookIcon sx={{ mr: 1.5, color: 'var(--accent-primary)' }} />
+                    <Typography sx={{ fontWeight: 500 }}>{module.title}</Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  {module.summary ? (
+                    <Typography sx={{ color: 'var(--text-secondary)' }}>
+                      {module.summary}
+                    </Typography>
+                  ) : (
+                    <Typography sx={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                      Không có mô tả chi tiết cho phần học này.
+                    </Typography>
+                  )}
+                </AccordionDetails>
+              </ModuleAccordion>
+            ))}
           </Box>
           
         </CourseInfoSection>
@@ -364,29 +444,29 @@ function CourseDetail() {
             
             <CourseFeatures>
               <FeatureItem disableGutters>
-                <AccessTimeIcon sx={{ mr: 1.5, color: '#3498db' }} />
+                <AccessTimeIcon sx={{ mr: 1.5, color: 'var(--accent-primary)' }} />
                 <Typography>Thời lượng: <strong>{course.duration} giờ</strong></Typography>
               </FeatureItem>
               
               <FeatureItem disableGutters>
-                <VideocamIcon sx={{ mr: 1.5, color: '#3498db' }} />
+                <VideocamIcon sx={{ mr: 1.5, color: 'var(--accent-primary)' }} />
                 <Typography>Bài giảng: <strong>{course.videoCount} video</strong></Typography>
               </FeatureItem>
               
               <FeatureItem disableGutters>
-                <PeopleIcon sx={{ mr: 1.5, color: '#3498db' }} />
+                <PeopleIcon sx={{ mr: 1.5, color: 'var(--accent-primary)' }} />
                 <Typography>Số lượng học viên: <strong>{course.totalEnrolled}</strong></Typography>
               </FeatureItem>
               
               <FeatureItem disableGutters>
-                <PersonIcon sx={{ mr: 1.5, color: '#3498db' }} />
+                <PersonIcon sx={{ mr: 1.5, color: 'var(--accent-primary)' }} />
                 <Typography>Giảng viên: <strong>{course.createdBy}</strong></Typography>
               </FeatureItem>
               
               {(course.status === 'IN_PROGRESS' || course.status === 'COMPLETED') && courseDetail && (
                 <Box sx={{ mt: 1, mb: 1.5 }}>
                   <FeatureItem disableGutters>
-                    <TimelineIcon sx={{ mr: 1.5, color: '#3498db' }} />
+                    <TimelineIcon sx={{ mr: 1.5, color: 'var(--accent-primary)' }} />
                     <Typography>
                       Tiến độ: <strong>{course.status === 'COMPLETED' ? '100.00' : formatProgress(courseDetail.progress)}%</strong>
                     </Typography>
@@ -399,9 +479,9 @@ function CourseDetail() {
                       borderRadius: 5,
                       mt: 0.5,
                       mb: 1,
-                      backgroundColor: '#e0e0e0',
+                      backgroundColor: 'var(--bg-tertiary)',
                       '& .MuiLinearProgress-bar': {
-                        backgroundColor: course.status === 'COMPLETED' ? '#27ae60' : '#27ae60'
+                        backgroundColor: course.status === 'COMPLETED' ? 'var(--accent-success)' : 'var(--accent-success)'
                       }
                     }} 
                   />
