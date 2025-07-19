@@ -63,6 +63,9 @@ const UserManagement = () => {
     fullName: '',
     email: '',
     phone: '',
+    gender: '',
+    yob: '',
+    address: '',
     role: '',
     password: '',
     confirmPassword: '',
@@ -72,8 +75,8 @@ const UserManagement = () => {
   // User roles
   const userRoles = [
     { value: 'ROLE_ADMIN', label: 'Admin', color: '#ef4444', icon: <AdminIcon /> },
-    { value: 'ROLE_STAFF', label: 'Staff', color: '#10b981', icon: <TeacherIcon /> },
-    { value: 'ROLE_STUDENT', label: 'Student', color: '#3b82f6', icon: <StudentIcon /> }
+    { value: 'ROLE_LECTURER', label: 'Lecturer', color: '#10b981', icon: <TeacherIcon /> },
+    { value: 'ROLE_MEMBER', label: 'Member', color: '#3b82f6', icon: <StudentIcon /> }
   ];
 
   // Mock data for development
@@ -128,8 +131,13 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/users');
-      setUsers(response.data || []);
+      // Since we don't have an API endpoint for listing users yet, we'll use mock data
+      console.log('Using mock data for users as the API endpoint is not available yet');
+      setUsers(mockUsers);
+      
+      // When the API is available, uncomment the following:
+      // const response = await apiClient.get('/api/admin/users');
+      // setUsers(response.data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       showSnackbar('Không thể tải danh sách người dùng', 'error');
@@ -155,6 +163,9 @@ const UserManagement = () => {
         fullName: user.fullName || '',
         email: user.email || '',
         phone: user.phone || '',
+        gender: user.gender || '',
+        yob: user.yob || '',
+        address: user.address || '',
         role: user.role || '',
         password: '',
         confirmPassword: '',
@@ -166,6 +177,9 @@ const UserManagement = () => {
         fullName: '',
         email: '',
         phone: '',
+        gender: '',
+        yob: '',
+        address: '',
         role: '',
         password: '',
         confirmPassword: '',
@@ -182,6 +196,9 @@ const UserManagement = () => {
       fullName: '',
       email: '',
       phone: '',
+      gender: '',
+      yob: '',
+      address: '',
       role: '',
       password: '',
       confirmPassword: '',
@@ -225,25 +242,43 @@ const UserManagement = () => {
     if (!validateForm()) return;
 
     try {
-      const userData = {
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        role: formData.role,
-        isActive: formData.isActive
-      };
-
+      // Create FormData object for multipart/form-data
+      const formDataObj = new FormData();
+      formDataObj.append('username', formData.email); // Using email as username
+      formDataObj.append('fullname', formData.fullName);
+      formDataObj.append('email', formData.email);
+      
+      if (formData.phone) {
+        formDataObj.append('phone', formData.phone);
+      }
+      
+      if (formData.gender) {
+        formDataObj.append('gender', formData.gender);
+      }
+      
+      if (formData.yob) {
+        formDataObj.append('yob', formData.yob);
+      }
+      
+      if (formData.address) {
+        formDataObj.append('address', formData.address);
+      }
+      
+      formDataObj.append('role', formData.role.replace('ROLE_', '')); // Remove ROLE_ prefix
+      
+      // Add password fields if creating new user or updating password
       if (!editingUser || formData.password) {
-        userData.password = formData.password;
+        formDataObj.append('password', formData.password);
+        formDataObj.append('confirmPassword', formData.confirmPassword);
       }
 
       if (editingUser) {
         // Update user
-        await apiClient.put(`/users/${editingUser.id}`, userData);
+        await apiClient.patch(`/api/admin/users/${editingUser.id}`, formDataObj);
         showSnackbar('Cập nhật người dùng thành công!', 'success');
       } else {
         // Create new user
-        await apiClient.post('/users', userData);
+        await apiClient.post('/api/admin/users', formDataObj);
         showSnackbar('Tạo người dùng thành công!', 'success');
       }
 
@@ -258,7 +293,7 @@ const UserManagement = () => {
   const handleDelete = async (userId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
       try {
-        await apiClient.delete(`/users/${userId}`);
+        await apiClient.patch(`/api/admin/users/delete/${userId}`);
         showSnackbar('Xóa người dùng thành công!', 'success');
         fetchUsers();
       } catch (error) {
@@ -707,6 +742,65 @@ const UserManagement = () => {
                     </InputAdornment>
                   ),
                 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    height: 56
+                  }
+                }}
+              />
+            </Grid>
+
+            {/* Gender */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                select
+                label="Giới Tính"
+                value={formData.gender}
+                onChange={(e) => handleInputChange('gender', e.target.value)}
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    height: 56
+                  }
+                }}
+              >
+                <MenuItem value="MALE">Nam</MenuItem>
+                <MenuItem value="FEMALE">Nữ</MenuItem>
+                <MenuItem value="OTHER">Khác</MenuItem>
+              </TextField>
+            </Grid>
+
+            {/* Year of Birth */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Năm Sinh"
+                type="number"
+                value={formData.yob}
+                onChange={(e) => handleInputChange('yob', e.target.value)}
+                variant="outlined"
+                placeholder="1990"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    height: 56
+                  }
+                }}
+              />
+            </Grid>
+
+            {/* Address */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Địa Chỉ"
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                variant="outlined"
+                placeholder="Nhập địa chỉ..."
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,

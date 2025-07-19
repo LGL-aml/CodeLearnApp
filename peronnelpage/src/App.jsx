@@ -4,6 +4,7 @@ import HeaderAdmin from './layout/Header';
 import Login from './pages/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
+import TopicManagement from './pages/admin/TopicManagement';
 import HeaderStaff from './layout/HeaderStaff';
 import CourseManagement from './pages/staff/CourseManagement';
 import ProfilePage from './pages/ProfilePage';
@@ -29,6 +30,7 @@ function App() {
                   <Routes>
                     <Route path="dashboard" element={<AdminDashboard />} />
                     <Route path="users" element={<UserManagement />} />
+                    <Route path="topics" element={<TopicManagement />} />
                     <Route path="profile" element={<ProfilePage />} />
                     <Route path="change-password" element={<ChangePassword />} />
                     <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
