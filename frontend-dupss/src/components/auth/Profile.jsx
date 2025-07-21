@@ -35,7 +35,8 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle
+  DialogTitle,
+  styled
 } from '@mui/material';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import {
@@ -54,6 +55,70 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { format, parse } from 'date-fns';
 import api, { getUserData } from '../../services/authService';
 import { API_URL } from '../../services/config';
+
+// Tạo styled component để ghi đè kiểu autofill của trình duyệt
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: '#1E2A38',
+    },
+    '&:hover fieldset': {
+      borderColor: '#2D9CDB',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#2D9CDB',
+    },
+    // Ghi đè kiểu khi autofill
+    '& input:-webkit-autofill': {
+      '-webkit-text-fill-color': '#FFFFFF',
+      '-webkit-box-shadow': '0 0 0px 1000px #15202B inset',
+      'transition': 'background-color 5000s ease-in-out 0s'
+    },
+    '& input:-webkit-autofill:hover, & input:-webkit-autofill:focus': {
+      '-webkit-text-fill-color': '#FFFFFF',
+      '-webkit-box-shadow': '0 0 0px 1000px #15202B inset',
+    }
+  },
+  '& .MuiInputLabel-root': {
+    color: '#8899A6',
+  },
+  '& .MuiInputLabel-root.Mui-focused': {
+    color: '#2D9CDB',
+  },
+  '& .MuiInputBase-input': {
+    color: '#FFFFFF',
+  },
+}));
+
+// Tạo styled component cho Select để ghi đè kiểu autofill
+const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: '#1E2A38',
+    },
+    '&:hover fieldset': {
+      borderColor: '#2D9CDB',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#2D9CDB',
+    },
+    // Ghi đè kiểu khi autofill
+    '& select:-webkit-autofill': {
+      '-webkit-text-fill-color': '#FFFFFF',
+      '-webkit-box-shadow': '0 0 0px 1000px #15202B inset',
+      'transition': 'background-color 5000s ease-in-out 0s'
+    }
+  },
+  '& .MuiInputLabel-root': {
+    color: '#8899A6',
+  },
+  '& .MuiInputLabel-root.Mui-focused': {
+    color: '#2D9CDB',
+  },
+  '& .MuiSelect-select': {
+    color: '#FFFFFF',
+  },
+}));
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -92,11 +157,20 @@ const Profile = () => {
   const fetchEnrolledCourses = async () => {
     setLoadingCourses(true);
     try {
-      const response = await api.get(`${API_URL}/courses/enrolled`);
-      setEnrolledCourses(response.data);
+      const response = await api.get(`/courses/enrolled`);
+      console.log('Enrolled courses response:', response.data);
+      
+      // Trích xuất dữ liệu từ cấu trúc JSON mới
+      if (response.data && response.data.data) {
+        setEnrolledCourses(response.data.data);
+      } else {
+        console.error('Unexpected API response structure:', response.data);
+        setEnrolledCourses([]);
+      }
       setLoadingCourses(false);
     } catch (error) {
       console.error('Error fetching enrolled courses:', error);
+      setEnrolledCourses([]);
       setLoadingCourses(false);
     }
   };
@@ -359,8 +433,8 @@ const Profile = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 5, mb: 5 }}>
-      <Paper elevation={3} sx={{ p: 3, borderRadius: 2, mb: 4 }}>
-        <Typography variant="h4" component="h1" align="center" gutterBottom sx={{ mb: 4, color: '#0056b3', fontWeight: 600 }}>
+      <Paper elevation={3} sx={{ p: 3, borderRadius: 2, mb: 4, backgroundColor: '#15202B', color: '#FFFFFF' }}>
+        <Typography variant="h4" component="h1" align="center" gutterBottom sx={{ mb: 4, color: '#2D9CDB', fontWeight: 600 }}>
           Thông tin tài khoản
         </Typography>
 
@@ -385,7 +459,7 @@ const Profile = () => {
                   sx={{
                     width: 200,
                     height: 200,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
                   }}
                 />
                 <input
@@ -402,11 +476,11 @@ const Profile = () => {
                       position: 'absolute',
                       bottom: 10,
                       right: 10,
-                      backgroundColor: 'rgba(255,255,255,0.9)',
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                      backgroundColor: '#0E1621',
+                      color: '#FFFFFF',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
                       '&:hover': {
-                        backgroundColor: 'rgba(255,255,255,1)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                        backgroundColor: '#2D9CDB',
                       }
                     }}
                   >
@@ -422,7 +496,7 @@ const Profile = () => {
             <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 600, mx: 'auto' }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {/* Full Name - full width */}
-                <TextField
+                <StyledTextField
                   fullWidth
                   required
                   id="fullName"
@@ -433,14 +507,14 @@ const Profile = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <PersonIcon />
+                        <PersonIcon sx={{ color: '#2D9CDB' }} />
                       </InputAdornment>
                     ),
                   }}
                 />
 
                 {/* Email - full width */}
-                <TextField
+                <StyledTextField
                   fullWidth
                   required
                   id="email"
@@ -452,7 +526,7 @@ const Profile = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <EmailIcon />
+                        <EmailIcon sx={{ color: '#2D9CDB' }} />
                       </InputAdornment>
                     ),
                   }}
@@ -460,50 +534,50 @@ const Profile = () => {
 
                 {/* Phone and Date of Birth on the same row */}
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                  {/* Phone */}
-                  <TextField
-                    sx={{ flex: 1 }}
-                    required
-                    id="phone"
-                    name="phone"
-                    label="Số điện thoại"
-                    value={userData.phone}
-                    onChange={handleChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <PhoneIcon />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
+                                      {/* Phone */}
+                    <StyledTextField
+                      sx={{ flex: 1 }}
+                      required
+                      id="phone"
+                      name="phone"
+                      label="Số điện thoại"
+                      value={userData.phone}
+                      onChange={handleChange}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <PhoneIcon sx={{ color: '#2D9CDB' }} />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
 
-                  {/* Date of Birth */}
-                  <TextField
-                    label="Ngày sinh"
-                    type="date"
-                    value={birthDate || ''}
-                    onChange={handleBirthDateChange}
-                    id="birthDate"
-                    name="birthDate"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CalendarIcon />
-                        </InputAdornment>
-                      )
-                    }}
-                    sx={{ flex: 1 }}
-                  />
+                                      {/* Date of Birth */}
+                    <StyledTextField
+                      label="Ngày sinh"
+                      type="date"
+                      value={birthDate || ''}
+                      onChange={handleBirthDateChange}
+                      id="birthDate"
+                      name="birthDate"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <CalendarIcon sx={{ color: '#2D9CDB' }} />
+                          </InputAdornment>
+                        )
+                      }}
+                      sx={{ flex: 1 }}
+                    />
                 </Box>
 
                 {/* Gender and Address on the same row */}
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   {/* Gender - shorter */}
-                  <FormControl sx={{ flex: 0.3 }}>
+                  <StyledFormControl sx={{ flex: 0.3 }}>
                     <InputLabel id="gender-label">Giới tính</InputLabel>
                     <Select
                       labelId="gender-label"
@@ -514,18 +588,18 @@ const Profile = () => {
                       label="Giới tính"
                       startAdornment={
                         <InputAdornment position="start">
-                          <WcIcon />
+                          <WcIcon sx={{ color: '#2D9CDB' }} />
                         </InputAdornment>
                       }
                     >
-                      <MenuItem value="male">Nam</MenuItem>
-                      <MenuItem value="female">Nữ</MenuItem>
-                      <MenuItem value="other">Khác</MenuItem>
+                      <MenuItem value="male" sx={{ color: '#000' }}>Nam</MenuItem>
+                      <MenuItem value="female" sx={{ color: '#000' }}>Nữ</MenuItem>
+                      <MenuItem value="other" sx={{ color: '#000' }}>Khác</MenuItem>
                     </Select>
-                  </FormControl>
+                  </StyledFormControl>
 
                   {/* Address - longer */}
-                  <TextField
+                  <StyledTextField
                     sx={{ flex: 0.7 }}
                     id="address"
                     name="address"
@@ -535,7 +609,7 @@ const Profile = () => {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <HomeIcon />
+                          <HomeIcon sx={{ color: '#2D9CDB' }} />
                         </InputAdornment>
                       ),
                     }}
@@ -552,9 +626,9 @@ const Profile = () => {
                     py: 1.5,
                     px: 5,
                     fontSize: '1rem',
-                    backgroundColor: '#1976d2',
+                    backgroundColor: '#2D9CDB',
                     '&:hover': {
-                      backgroundColor: '#1565c0',
+                      backgroundColor: '#1976d2',
                     },
                     position: 'relative',
                     fontWeight: 600
@@ -586,34 +660,36 @@ const Profile = () => {
         expanded={expandedCourses}
         onChange={handleCoursesAccordionChange}
         sx={{
-          boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
           borderRadius: '8px',
           overflow: 'hidden',
           '&:before': {
             display: 'none',
           },
-          mb: 2
+          mb: 2,
+          backgroundColor: '#15202B',
+          color: '#FFFFFF',
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
+          expandIcon={<ExpandMoreIcon sx={{ color: '#FFFFFF' }} />}
           aria-controls="enrolled-courses-content"
           id="enrolled-courses-header"
           sx={{
-            backgroundColor: '#f5f8ff',
-            borderBottom: '1px solid #e0e7ff',
+            backgroundColor: '#192734',
+            borderBottom: '1px solid #1E2A38',
             padding: '12px 20px',
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#0056b3' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#2D9CDB' }}>
             Các khóa học đã đăng ký
           </Typography>
         </AccordionSummary>
         <AccordionDetails sx={{ p: 0 }}>
           {loadingCourses ? (
             <Box sx={{ p: 3, textAlign: 'center' }}>
-              <CircularProgress size={30} />
-              <Typography variant="body1" sx={{ mt: 2 }}>
+              <CircularProgress size={30} sx={{ color: '#2D9CDB' }} />
+              <Typography variant="body1" sx={{ mt: 2, color: '#FFFFFF' }}>
                 Đang tải thông tin khóa học...
               </Typography>
             </Box>
@@ -621,51 +697,51 @@ const Profile = () => {
             <>
               <TableContainer>
                 <Table sx={{ minWidth: 650 }}>
-                  <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+                  <TableHead sx={{ backgroundColor: '#192734' }}>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Ngày đăng ký</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Khóa học</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Ngày hoàn thành khóa học</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Chứng chỉ</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#FFFFFF' }}>Ngày đăng ký</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#FFFFFF' }}>Khóa học</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#FFFFFF' }}>Ngày hoàn thành khóa học</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#FFFFFF' }}>Trạng thái</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#FFFFFF' }}>Chứng chỉ</TableCell>
                     </TableRow>
                   </TableHead>
-                  <TableBody>
+                  <TableBody sx={{ backgroundColor: '#15202B' }}>
                     {enrolledCourses.map((course) => {
                       const user = getUserData();
                       return (
-                        <TableRow key={course.id}>
-                          <TableCell>{course.enrollmentDate}</TableCell>
-                          <TableCell>
+                        <TableRow key={course.courseId} sx={{ '&:hover': { backgroundColor: '#192734' } }}>
+                          <TableCell sx={{ color: '#8899A6', borderBottom: '1px solid #1E2A38' }}>{course.enrollmentDate}</TableCell>
+                          <TableCell sx={{ borderBottom: '1px solid #1E2A38' }}>
                             {course.courseTitle && (
                               <Link
                                 href={`/courses/${course.courseId}`}
                                 target="_self"
                                 rel="noopener noreferrer"
-                                sx={{ textDecoration: 'none' }}
+                                sx={{ textDecoration: 'none', color: '#2D9CDB', '&:hover': { color: '#5DADE2' } }}
                               >
                                 {course.courseTitle}
                               </Link>
                             )}
                           </TableCell>
-                          <TableCell>{course.completionDate || ''}</TableCell>
-                          <TableCell>
+                          <TableCell sx={{ color: '#8899A6', borderBottom: '1px solid #1E2A38' }}>{course.completionDate || ''}</TableCell>
+                          <TableCell sx={{ borderBottom: '1px solid #1E2A38' }}>
                             <Chip
                               label={course.status === 'IN_PROGRESS' ? 'Đang tham gia' : 'Đã hoàn thành'}
                               sx={{
-                                backgroundColor: course.status === 'IN_PROGRESS' ? '#ffc107' : '#4caf50',
+                                backgroundColor: course.status === 'IN_PROGRESS' ? '#F39C12' : '#2ECC71',
                                 color: 'white',
                                 fontWeight: 500,
                               }}
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell sx={{ borderBottom: '1px solid #1E2A38' }}>
                             {course.status === 'COMPLETED' && (
                               <Link
                                 href={`/courses/${course.courseId}/cert/${user?.id || ''}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                sx={{ textDecoration: 'none' }}
+                                sx={{ textDecoration: 'none', color: '#2D9CDB', '&:hover': { color: '#5DADE2' } }}
                               >
                                 Chứng chỉ
                               </Link>
@@ -677,27 +753,21 @@ const Profile = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-              <Box sx={{ p: 2 }}>
-                <Typography variant="body2" color="primary">
+              <Box sx={{ p: 2, backgroundColor: '#192734' }}>
+                <Typography variant="body2" sx={{ color: '#8899A6' }}>
                   *Bấm vào tên khóa học để được chuyển hướng qua trang của khóa học.
                 </Typography>
               </Box>
             </>
           ) : (
             <Box sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body1" color="#8899A6">
                 Bạn chưa đăng ký khóa học nào.
               </Typography>
             </Box>
           )}
         </AccordionDetails>
       </Accordion>
-
-
-
-
-
-
     </Container>
   );
 };
