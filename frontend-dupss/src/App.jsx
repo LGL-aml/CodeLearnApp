@@ -6,7 +6,6 @@ import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import ForgotPassword from './components/auth/ForgotPassword';
 import Profile from './components/auth/Profile';
-import ChangePassword from './components/auth/ChangePassword';
 import CoursesList from './components/courses/CoursesList';
 import CourseDetail from './components/courses/CourseDetail';
 import CourseLearning from './components/courses/CourseLearning';
@@ -44,11 +43,6 @@ function App() {
         <Route path="/profile" element={
           <Layout>
             <Profile />
-          </Layout>
-        } />
-        <Route path="/change-password" element={
-          <Layout>
-            <ChangePassword />
           </Layout>
         } />
         <Route path="/courses" element={

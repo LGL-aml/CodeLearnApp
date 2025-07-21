@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
-import { Box, Typography, Paper, List, ListItem, ListItemText, 
-         ListItemButton, ListItemIcon, Collapse, Checkbox,
-         IconButton, styled, Breadcrumbs, Link, Button, Alert, CircularProgress } from '@mui/material';
+import {
+  Box, Typography, Paper, List, ListItem, ListItemText,
+  ListItemButton, ListItemIcon, Collapse, Checkbox,
+  IconButton, styled, Breadcrumbs, Link, Button, Alert, CircularProgress
+} from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
@@ -108,7 +110,7 @@ const SectionInfo = styled(Typography)(({ theme }) => ({
 }));
 
 const VideoContainer = styled(Box)(({ theme }) => ({
-  position: 'relative', 
+  position: 'relative',
   width: '100%',
   height: '100%',
   paddingBottom: 0,
@@ -117,11 +119,11 @@ const VideoContainer = styled(Box)(({ theme }) => ({
 }));
 
 const VideoPlayer = styled('iframe')(({ theme }) => ({
-  position: 'absolute', 
-  top: 0, 
-  left: 0, 
-  width: '100%', 
-  height: '100%', 
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
   border: 0,
 }));
 
@@ -187,7 +189,7 @@ function loadYouTubeAPI() {
     tag.src = 'https://www.youtube.com/iframe_api';
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    
+
     window.onYouTubeIframeAPIReady = () => {
       resolve();
     };
@@ -232,7 +234,7 @@ function CourseLearning() {
         setCourse(response.data);
         // Lấy giá trị progress từ API response, đảm bảo không vượt quá 100%
         setCourseProgress(Math.min(100, response.data.progress || 0));
-        
+
         // Map response data to component state
         const mappedModules = response.data.modules.map(module => ({
           ...module,
@@ -287,7 +289,7 @@ function CourseLearning() {
               isExpanded: index === 0
             }));
             setModules(updatedModules);
-            
+
             // Select first video of first section
             if (mappedModules[0].videoUrl.length > 0) {
               setCurrentVideo(mappedModules[0].videoUrl[0]);
@@ -315,10 +317,10 @@ function CourseLearning() {
   }, [id, navigate]);
 
   const handleToggleModule = (moduleId) => {
-    setModules(prevModules => 
-      prevModules.map(module => 
-        module.id === moduleId 
-          ? { ...module, isExpanded: !module.isExpanded } 
+    setModules(prevModules =>
+      prevModules.map(module =>
+        module.id === moduleId
+          ? { ...module, isExpanded: !module.isExpanded }
           : module
       )
     );
@@ -329,14 +331,14 @@ function CourseLearning() {
     // When video is playing (YT.PlayerState.PLAYING = 1)
     if (event.data === 1 && !progressTrackingRef.current) {
       progressTrackingRef.current = true;
-      
+
       // Check progress every second
       const progressInterval = setInterval(() => {
         if (!playerRef.current) {
           clearInterval(progressInterval);
           return;
         }
-        
+
         try {
           // Kiểm tra lại xem video hiện tại có tồn tại và đã được hoàn thành chưa
           if (!currentVideo) {
@@ -344,7 +346,7 @@ function CourseLearning() {
             progressTrackingRef.current = false;
             return;
           }
-          
+
           // Tìm video hiện tại trong modules để kiểm tra trạng thái mới nhất
           let isCurrentlyCompleted = false;
           for (const module of modules) {
@@ -356,23 +358,23 @@ function CourseLearning() {
             }
             if (isCurrentlyCompleted) break;
           }
-          
+
           // Nếu video đã được đánh dấu hoàn thành từ trước, dừng theo dõi
           if (isCurrentlyCompleted) {
             clearInterval(progressInterval);
             progressTrackingRef.current = false;
             return;
           }
-          
+
           const currentTime = playerRef.current.getCurrentTime();
           const duration = playerRef.current.getDuration();
           const progress = (currentTime / duration) * 100;
-          
+
           // If progress is over 80% and video is not marked as completed, auto-mark it
           if (progress >= 80 && currentVideo && !currentVideo.completed) {
             clearInterval(progressInterval);
             progressTrackingRef.current = false;
-            
+
             // Use silent update method to avoid reloading the video
             silentMarkVideoComplete(currentVideo.id);
           }
@@ -394,7 +396,7 @@ function CourseLearning() {
       // Kiểm tra xem video đã được đánh dấu là hoàn thành chưa
       let videoAlreadyCompleted = false;
       const currentModules = [...modules];
-      
+
       for (const module of currentModules) {
         for (const video of module.videoUrl) {
           if (video.id === videoId && video.completed) {
@@ -404,7 +406,7 @@ function CourseLearning() {
         }
         if (videoAlreadyCompleted) break;
       }
-      
+
       // Nếu video đã hoàn thành, không cập nhật gì thêm
       if (videoAlreadyCompleted) {
         console.log('Video already marked as completed');
@@ -420,36 +422,36 @@ function CourseLearning() {
             }
             return video;
           });
-          
+
           return { ...module, videoUrl: updatedVideos };
         });
         return updatedModules;
       });
-      
+
       // Đếm số lượng video hoàn thành hiện tại
       let totalVideos = 0;
       let completedVideos = 0;
-      
+
       currentModules.forEach(module => {
         module.videoUrl.forEach(video => {
           totalVideos++;
           if (video.completed || video.id === videoId) completedVideos++;
         });
       });
-      
+
       // Đảm bảo không vượt quá tổng số video
       completedVideos = Math.min(completedVideos, totalVideos);
-      
+
       // Cập nhật tiến độ một cách chính xác
       const newProgress = Math.min(100, totalVideos > 0 ? (completedVideos / totalVideos) * 100 : 0);
-      
+
       // Cập nhật state
-      setVideoStats({ 
-        total: totalVideos, 
-        completed: completedVideos 
+      setVideoStats({
+        total: totalVideos,
+        completed: completedVideos
       });
       setCourseProgress(newProgress);
-      
+
       // Cập nhật currentVideo nếu cần
       if (currentVideo && currentVideo.id === videoId) {
         setCurrentVideo(prev => {
@@ -457,7 +459,7 @@ function CourseLearning() {
           return { ...prev, completed: true };
         });
       }
-      
+
       // Gọi API (không chờ đợi kết quả)
       api.post(`/courses/videos/watched/${videoId}?watched=true`)
         .catch(error => {
@@ -475,25 +477,25 @@ function CourseLearning() {
             });
             return updatedModules;
           });
-          
+
           if (currentVideo && currentVideo.id === videoId) {
             setCurrentVideo(prev => ({ ...prev, completed: false }));
           }
-          
+
           // Tính lại số video đã hoàn thành
           let newTotalVideos = 0;
           let newCompletedVideos = 0;
-          
+
           prevModules.forEach(module => {
             module.videoUrl.forEach(video => {
               newTotalVideos++;
               if (video.completed && video.id !== videoId) newCompletedVideos++;
             });
           });
-          
-          const correctedProgress = Math.min(100, newTotalVideos > 0 ? 
+
+          const correctedProgress = Math.min(100, newTotalVideos > 0 ?
             (newCompletedVideos / newTotalVideos) * 100 : 0);
-            
+
           setVideoStats({
             total: newTotalVideos,
             completed: newCompletedVideos
@@ -517,48 +519,48 @@ function CourseLearning() {
             }
             return video;
           });
-          
+
           return { ...module, videoUrl: updatedVideos };
         });
-        
+
         return updatedModules;
       });
-      
+
       // Tính toán lại tiến độ từ dữ liệu hiện tại
       let totalVideos = 0;
       let completedVideos = 0;
-      
+
       // Sử dụng một bản sao của modules hiện tại và cập nhật trạng thái của video đang xử lý
       const currentModules = [...modules];
       for (const module of currentModules) {
         for (const video of module.videoUrl) {
           totalVideos++;
-          
+
           if ((video.id === videoId && !isCompleted) || (video.id !== videoId && video.completed)) {
             completedVideos++;
           }
         }
       }
-      
+
       // Đảm bảo không vượt quá tổng số video
       completedVideos = Math.min(completedVideos, totalVideos);
-      
+
       // Cập nhật tiến độ một cách chính xác
       const newProgress = Math.min(100, totalVideos > 0 ? (completedVideos / totalVideos) * 100 : 0);
-      
+
       // Cập nhật state
-      setVideoStats({ 
-        total: totalVideos, 
-        completed: completedVideos 
+      setVideoStats({
+        total: totalVideos,
+        completed: completedVideos
       });
       setCourseProgress(newProgress);
-      
+
       if (currentVideo && currentVideo.id === videoId) {
         setCurrentVideo(prev => {
           return { ...prev, completed: !isCompleted };
         });
       }
-      
+
       // Gọi API (không chờ đợi kết quả)
       api.post(`/courses/videos/watched/${videoId}?watched=${!isCompleted}`)
         .catch(error => {
@@ -576,25 +578,25 @@ function CourseLearning() {
             });
             return updatedModules;
           });
-          
+
           if (currentVideo && currentVideo.id === videoId) {
             setCurrentVideo(prev => ({ ...prev, completed: isCompleted }));
           }
-          
+
           // Tính lại tiến độ chính xác
           let newTotalVideos = 0;
           let newCompletedVideos = 0;
-          
+
           prevModules.forEach(module => {
             module.videoUrl.forEach(video => {
               newTotalVideos++;
               if (video.completed) newCompletedVideos++;
             });
           });
-          
-          const correctedProgress = Math.min(100, newTotalVideos > 0 ? 
+
+          const correctedProgress = Math.min(100, newTotalVideos > 0 ?
             (newCompletedVideos / newTotalVideos) * 100 : 0);
-            
+
           setVideoStats({
             total: newTotalVideos,
             completed: newCompletedVideos
@@ -611,14 +613,14 @@ function CourseLearning() {
   const updateProgressAfterVideoChange = (currentModules) => {
     let totalVideos = 0;
     let completedVideos = 0;
-    
+
     currentModules.forEach(module => {
       module.videoUrl.forEach(video => {
         totalVideos++;
         if (video.completed) completedVideos++;
       });
     });
-    
+
     setVideoStats({ total: totalVideos, completed: completedVideos });
     const newProgress = Math.min(100, totalVideos > 0 ? (completedVideos / totalVideos) * 100 : 0);
     setCourseProgress(newProgress);
@@ -627,25 +629,25 @@ function CourseLearning() {
   // Optimize createPlayer function to ensure player correctly fills container
   const createPlayer = useCallback(async () => {
     if (!currentVideo) return;
-    
+
     try {
       await loadYouTubeAPI();
-      
+
       // Save current player state (if exists)
       let currentTime = 0;
       let wasPlaying = false;
-      
+
       // Check if we really need to recreate the player
       const videoId = getYoutubeId(currentVideo.url);
-      const currentPlayerVideoId = playerRef.current && playerRef.current.getVideoData ? 
+      const currentPlayerVideoId = playerRef.current && playerRef.current.getVideoData ?
         playerRef.current.getVideoData().video_id : null;
-      
+
       // If the current player is already playing this video, no need to recreate
       if (playerRef.current && currentPlayerVideoId === videoId) {
         console.log('Same video is already playing, not recreating player');
         return;
       }
-      
+
       if (playerRef.current) {
         try {
           currentTime = playerRef.current.getCurrentTime();
@@ -655,23 +657,23 @@ function CourseLearning() {
           console.error('Error saving player state', e);
         }
       }
-      
+
       if (!videoId || !videoPlayerContainerRef.current) return;
-      
+
       // Create container element
       const playerContainer = document.createElement('div');
       playerContainer.id = 'youtube-player-' + Date.now();
       playerContainer.style.width = '100%';
       playerContainer.style.height = '100%';
-      
+
       // Clear existing content
       while (videoPlayerContainerRef.current.firstChild) {
         videoPlayerContainerRef.current.removeChild(videoPlayerContainerRef.current.firstChild);
       }
-      
+
       // Add new container
       videoPlayerContainerRef.current.appendChild(playerContainer);
-      
+
       // Create YouTube player and set it to fill the entire container
       playerRef.current = new window.YT.Player(playerContainer.id, {
         videoId: videoId,
@@ -706,7 +708,7 @@ function CourseLearning() {
       console.log('Same video selected, no action needed');
       return;
     }
-    
+
     setCurrentVideo(video);
     progressTrackingRef.current = false;
   };
@@ -714,12 +716,12 @@ function CourseLearning() {
   // Create new player when currentVideo changes, add conditions to avoid unnecessary re-rendering
   useEffect(() => {
     // Only recreate the player when video URL changes
-    if (currentVideo && (!playerRef.current || 
-        (playerRef.current.getVideoData && playerRef.current.getVideoData().video_id !== getYoutubeId(currentVideo.url)))
+    if (currentVideo && (!playerRef.current ||
+      (playerRef.current.getVideoData && playerRef.current.getVideoData().video_id !== getYoutubeId(currentVideo.url)))
     ) {
       createPlayer();
     }
-    
+
     return () => {
       if (playerRef.current) {
         progressTrackingRef.current = false;
@@ -736,21 +738,21 @@ function CourseLearning() {
   const calculateProgress = () => {
     let totalVideos = 0;
     let completedVideos = 0;
-    
+
     modules.forEach(module => {
       module.videoUrl.forEach(video => {
         totalVideos++;
         if (video.completed) completedVideos++;
       });
     });
-    
+
     return Math.min(100, totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0);
   };
 
   const formatDuration = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    
+
     if (hours > 0) {
       return `${hours}hr ${minutes}min`;
     } else {
@@ -801,21 +803,21 @@ function CourseLearning() {
     <Box sx={{ backgroundColor: '#0E1621', color: 'white', minHeight: '100vh' }}>
       {/* Breadcrumb */}
       <BreadcrumbContainer>
-        <Breadcrumbs 
-          separator={<NavigateNextIcon fontSize="small" sx={{ color: '#fff' }} />} 
+        <Breadcrumbs
+          separator={<NavigateNextIcon fontSize="small" sx={{ color: '#fff' }} />}
           aria-label="breadcrumb"
         >
-          <Link 
-            component={RouterLink} 
-            to="/courses" 
+          <Link
+            component={RouterLink}
+            to="/courses"
             sx={{ color: '#fff', '&:hover': { color: '#2D9CDB' } }}
             underline="hover"
           >
             Khóa học
           </Link>
-          <Link 
-            component={RouterLink} 
-            to={`/courses/${id}`} 
+          <Link
+            component={RouterLink}
+            to={`/courses/${id}`}
             sx={{ color: '#fff', '&:hover': { color: '#2D9CDB' } }}
             underline="hover"
           >
@@ -836,46 +838,29 @@ function CourseLearning() {
             )}
           </Typography>
           <Typography variant="body2" sx={{ color: '#8899A6' }}>
-            {isCompleted || allVideosWatched ? 
+            {isCompleted || allVideosWatched ?
               "Chúc mừng bạn đã hoàn thành khóa học! Bạn có thể xem lại video tại đây để củng cố thêm kiến thức cho mình nhé!" :
               "Sau khi xem hết video với tiến độ là 100%, bạn sẽ được tham gia làm kiểm tra để có thể hoàn thành khóa học"
             }
           </Typography>
         </Box>
-        {isCompleted || allVideosWatched ? (
-          <Button
-            variant="contained"
-            startIcon={<EmojiEventsIcon />}
-            onClick={handleCertificateClick}
-            sx={{ 
-              fontWeight: 'bold',
-              bgcolor: '#4CAF50',
-              '&:hover': {
-                bgcolor: '#388E3C',
-              }
-            }}
-          >
-            NHẬN CHỨNG CHỈ
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            startIcon={<AssignmentIcon />}
-            disabled={courseProgress < 100}
-            onClick={handleSurveyClick}
-            sx={{ 
-              fontWeight: 'bold',
-              bgcolor: courseProgress >= 100 ? '#4CAF50' : '#2D9CDB',
-              '&:hover': {
-                bgcolor: courseProgress >= 100 ? '#388E3C' : '#1976D2',
-              }
-            }}
-          >
-            Làm kiểm tra
-          </Button>
-        )}
+        <Button
+          variant="contained"
+          startIcon={<EmojiEventsIcon />}
+          disabled={courseProgress < 100 || !isCompleted}
+          onClick={handleCertificateClick}
+          sx={{
+            fontWeight: 'bold',
+            bgcolor: '#4CAF50',
+            '&:hover': {
+              bgcolor: '#388E3C',
+            }
+          }}
+        >
+          NHẬN CHỨNG CHỈ
+        </Button>
       </ProgressInfoContainer>
-    
+
       <PageContainer>
         {/* Video Panel - Left side */}
         <VideoPanel>
@@ -883,13 +868,13 @@ function CourseLearning() {
             <Box sx={{ width: '100%', height: '100%', display: 'flex' }}>
               {/* Video Player */}
               <VideoContainer>
-                <Box 
+                <Box
                   ref={videoPlayerContainerRef}
-                  sx={{ 
-                    position: 'absolute', 
-                    top: 0, 
-                    left: 0, 
-                    width: '100%', 
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
                     height: '100%',
                     border: 0
                   }}
@@ -902,14 +887,14 @@ function CourseLearning() {
             </Box>
           )}
         </VideoPanel>
-        
+
         {/* Course Curriculum Sidebar - Right side */}
         <SidebarPanel>
           <SidebarWrapper>
             <ContentHeader>
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>Nội dung khóa học</Typography>
             </ContentHeader>
-            
+
             <ContentList>
               {modules.map((module, index) => (
                 <Box key={module.id}>
@@ -926,20 +911,20 @@ function CourseLearning() {
                       {module.isExpanded ? <ExpandLess /> : <ExpandMore />}
                     </IconButton>
                   </SectionHeaderStyled>
-                  
+
                   <Collapse in={module.isExpanded} timeout="auto">
                     <List component="div" disablePadding sx={{ bgcolor: '#192734' }}>
                       {module.videoUrl.map((video) => (
-                        <VideoListItemButton 
+                        <VideoListItemButton
                           key={video.id}
                           selected={currentVideo && currentVideo.id === video.id}
                           onClick={() => handleSelectVideo(video)}
-                          sx={{ 
-                            pl: 4, 
+                          sx={{
+                            pl: 4,
                             py: 1.5,
-                            borderLeft: currentVideo && currentVideo.id === video.id ? 
+                            borderLeft: currentVideo && currentVideo.id === video.id ?
                               '4px solid #2D9CDB' : '4px solid transparent',
-                            backgroundColor: currentVideo && currentVideo.id === video.id ? 
+                            backgroundColor: currentVideo && currentVideo.id === video.id ?
                               'rgba(45, 156, 219, 0.1)' : 'transparent',
                           }}
                         >
@@ -953,12 +938,12 @@ function CourseLearning() {
                                 handleVideoCompletion(video.id, video.completed);
                               }}
                               onClick={(e) => e.stopPropagation()}
-                              sx={{color: video.completed ? "#4CAF50" : "#2D9CDB"}}
+                              sx={{ color: video.completed ? "#4CAF50" : "#2D9CDB" }}
                               size="small"
                             />
                           </ListItemIcon>
-                          <ListItemText 
-                            primary={video.videoTitle.includes(":") ? video.videoTitle.split(":")[1] : video.videoTitle} 
+                          <ListItemText
+                            primary={video.videoTitle.includes(":") ? video.videoTitle.split(":")[1] : video.videoTitle}
                             secondary={video.duration > 0 ? formatDuration(video.duration) : null}
                             primaryTypographyProps={{
                               fontSize: '0.9rem',
