@@ -23,7 +23,7 @@ import {
   Computer as ComputerIcon,
   Assignment as AssignmentIcon
 } from '@mui/icons-material';
-import { getUserInfo } from '../utils/auth';
+import { getUserInfo, logout } from '../utils/auth';
 
 const HeaderStaff = ({ userName }) => {
   const navigate = useNavigate();
@@ -62,8 +62,18 @@ const HeaderStaff = ({ userName }) => {
   };
 
   const handleLogout = async () => {
-    // Logout functionality removed - direct access mode
-    console.log('Logout clicked');
+    try {
+      setLoggingOut(true);
+      
+      // Use the logout utility function
+      logout(() => {
+        // Redirect to login page after logout completes
+        navigate('/login');
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      setLoggingOut(false);
+    }
   };
 
   const menuItems = [
