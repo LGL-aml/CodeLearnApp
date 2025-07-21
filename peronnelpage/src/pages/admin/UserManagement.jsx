@@ -68,15 +68,14 @@ const UserManagement = () => {
     address: '',
     role: '',
     password: '',
-    confirmPassword: '',
-    isActive: true
+    confirmPassword: ''
   });
 
   // User roles
   const userRoles = [
-    { value: 'ROLE_ADMIN', label: 'Admin', color: '#ef4444', icon: <AdminIcon /> },
-    { value: 'ROLE_LECTURER', label: 'Lecturer', color: '#10b981', icon: <TeacherIcon /> },
-    { value: 'ROLE_MEMBER', label: 'Member', color: '#3b82f6', icon: <StudentIcon /> }
+    { value: 'ROLE_ADMIN', label: 'Admin', color: '#ef4444', icon: <AdminIcon />, iconComponent: AdminIcon },
+    { value: 'ROLE_LECTURER', label: 'Lecturer', color: '#10b981', icon: <TeacherIcon />, iconComponent: TeacherIcon },
+    { value: 'ROLE_MEMBER', label: 'Member', color: '#3b82f6', icon: <StudentIcon />, iconComponent: StudentIcon }
   ];
 
   // Mock data for development
@@ -168,8 +167,7 @@ const UserManagement = () => {
         address: user.address || '',
         role: user.role || '',
         password: '',
-        confirmPassword: '',
-        isActive: user.isActive !== undefined ? user.isActive : true
+        confirmPassword: ''
       });
     } else {
       setEditingUser(null);
@@ -182,8 +180,7 @@ const UserManagement = () => {
         address: '',
         role: '',
         password: '',
-        confirmPassword: '',
-        isActive: true
+        confirmPassword: ''
       });
     }
     setOpenDialog(true);
@@ -201,8 +198,7 @@ const UserManagement = () => {
       address: '',
       role: '',
       password: '',
-      confirmPassword: '',
-      isActive: true
+      confirmPassword: ''
     });
   };
 
@@ -247,7 +243,9 @@ const UserManagement = () => {
       formDataObj.append('username', formData.email); // Using email as username
       formDataObj.append('fullname', formData.fullName);
       formDataObj.append('email', formData.email);
+      formDataObj.append('role', formData.role.replace('ROLE_', '')); // Remove ROLE_ prefix
       
+      // Add optional fields
       if (formData.phone) {
         formDataObj.append('phone', formData.phone);
       }
@@ -263,8 +261,6 @@ const UserManagement = () => {
       if (formData.address) {
         formDataObj.append('address', formData.address);
       }
-      
-      formDataObj.append('role', formData.role.replace('ROLE_', '')); // Remove ROLE_ prefix
       
       // Add password fields if creating new user or updating password
       if (!editingUser || formData.password) {
@@ -338,8 +334,31 @@ const UserManagement = () => {
     setPage(0);
   };
 
-  const getRoleInfo = (role) => {
-    return userRoles.find(r => r.value === role) || { label: role, color: '#6b7280', icon: <PersonIcon /> };
+      const getRoleInfo = (role) => {
+     return userRoles.find(r => r.value === role) || { label: role, color: '#6b7280', icon: <PersonIcon />, iconComponent: PersonIcon };
+    };
+
+  // Common styles for form fields
+  const inputFieldStyle = {
+    width: '100%',
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 2,
+      height: 56
+    },
+    '& .MuiInputLabel-root': {
+      transform: 'translate(14px, 16px) scale(1)'
+    },
+    '& .MuiInputLabel-shrink': {
+      transform: 'translate(14px, -6px) scale(0.75)'
+    },
+    '& .MuiInputBase-input': {
+      padding: '16px 14px 16px 0'
+    },
+    '& .MuiInputAdornment-root': {
+      minWidth: 40,
+      display: 'flex',
+      justifyContent: 'center'
+    }
   };
 
   if (loading) {
@@ -626,6 +645,7 @@ const UserManagement = () => {
           color: 'white',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'center',
           gap: 2,
           py: 3
         }}>
@@ -636,7 +656,17 @@ const UserManagement = () => {
         </DialogTitle>
 
         <DialogContent sx={{ p: 4, bgcolor: 'white' }}>
-          <Box sx={{ mb: 4, p: 3, bgcolor: '#f8f9fa', borderRadius: 2, border: '1px solid #e0e0e0' }}>
+          <Box sx={{ 
+            mb: 4, 
+            p: 3, 
+            bgcolor: '#f8f9fa', 
+            borderRadius: 2, 
+            border: '1px solid #e0e0e0',
+            textAlign: 'center',
+            width: '100%',
+            maxWidth: '500px',
+            mx: 'auto'
+          }}>
             <Typography variant="h6" sx={{ mb: 1, color: '#1e293b', fontWeight: 600 }}>
               {editingUser ? 'Cập nhật thông tin người dùng' : 'Thông tin người dùng mới'}
             </Typography>
@@ -645,9 +675,9 @@ const UserManagement = () => {
             </Typography>
           </Box>
 
-          <Grid container spacing={3}>
-            {/* Full Name */}
-            <Grid item xs={12}>
+          <Box sx={{ width: '100%', maxWidth: '500px', mx: 'auto' }}>
+            {/* Thông tin cơ bản */}
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 label="Họ và Tên"
@@ -659,21 +689,16 @@ const UserManagement = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonIcon color="primary" />
+                      <PersonIcon color="primary" sx={{ fontSize: 20 }} />
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
-                }}
+                sx={inputFieldStyle}
               />
-            </Grid>
+            </Box>
 
-            {/* Email and Role */}
-            <Grid item xs={12} sm={8}>
+            {/* Email */}
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 label="Email"
@@ -683,23 +708,43 @@ const UserManagement = () => {
                 required
                 variant="outlined"
                 placeholder="user@example.com"
+                error={formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)}
+                helperText={formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) ? "Email không hợp lệ" : ""}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <EmailIcon color="primary" />
+                      <EmailIcon color="primary" sx={{ fontSize: 20 }} />
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
-                }}
+                sx={inputFieldStyle}
               />
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={4}>
+            {/* Phone */}
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                label="Số Điện Thoại"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                variant="outlined"
+                placeholder="0123456789"
+                error={formData.phone && !/^[0-9]{10,11}$/.test(formData.phone)}
+                helperText={formData.phone && !/^[0-9]{10,11}$/.test(formData.phone) ? "Số điện thoại không hợp lệ" : ""}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PhoneIcon color="primary" sx={{ fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={inputFieldStyle}
+              />
+            </Box>
+            
+            {/* Role */}
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 select
@@ -709,50 +754,34 @@ const UserManagement = () => {
                 required
                 variant="outlined"
                 sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
+                  ...inputFieldStyle,
+                  '& .MuiSelect-select': {
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center'
                   }
+                }}
+                                  InputProps={{
+                  startAdornment: formData.role ? (
+                    <InputAdornment position="start" sx={{ minWidth: 28 }}>
+                      {(() => {
+                        const RoleIcon = getRoleInfo(formData.role).iconComponent;
+                        return <RoleIcon color="primary" sx={{ fontSize: 20 }} />;
+                      })()}
+                    </InputAdornment>
+                  ) : null,
                 }}
               >
                 {userRoles.map((role) => (
                   <MenuItem key={role.value} value={role.value}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {role.icon}
-                      <Typography>{role.label}</Typography>
-                    </Box>
+                    <Typography>{role.label}</Typography>
                   </MenuItem>
                 ))}
               </TextField>
-            </Grid>
-
-            {/* Phone */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Số Điện Thoại"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                variant="outlined"
-                placeholder="0123456789"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PhoneIcon color="primary" />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
-                }}
-              />
-            </Grid>
+            </Box>
 
             {/* Gender */}
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 select
@@ -761,20 +790,29 @@ const UserManagement = () => {
                 onChange={(e) => handleInputChange('gender', e.target.value)}
                 variant="outlined"
                 sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
+                  ...inputFieldStyle,
+                  '& .MuiSelect-select': {
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center'
                   }
+                }}
+                InputProps={{
+                  startAdornment: formData.gender ? (
+                    <InputAdornment position="start" sx={{ minWidth: 28 }}>
+                      <PersonIcon color="primary" sx={{ fontSize: 20 }} />
+                    </InputAdornment>
+                  ) : null,
                 }}
               >
                 <MenuItem value="MALE">Nam</MenuItem>
                 <MenuItem value="FEMALE">Nữ</MenuItem>
                 <MenuItem value="OTHER">Khác</MenuItem>
               </TextField>
-            </Grid>
+            </Box>
 
             {/* Year of Birth */}
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 label="Năm Sinh"
@@ -783,17 +821,21 @@ const UserManagement = () => {
                 onChange={(e) => handleInputChange('yob', e.target.value)}
                 variant="outlined"
                 placeholder="1990"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
+                sx={inputFieldStyle}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Typography variant="body1" color="primary" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
+                        #
+                      </Typography>
+                    </InputAdornment>
+                  ),
                 }}
               />
-            </Grid>
+            </Box>
 
             {/* Address */}
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 label="Địa Chỉ"
@@ -801,42 +843,21 @@ const UserManagement = () => {
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 variant="outlined"
                 placeholder="Nhập địa chỉ..."
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
+                sx={inputFieldStyle}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Box component="span" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
+                        🏠
+                      </Box>
+                    </InputAdornment>
+                  ),
                 }}
               />
-            </Grid>
-
-            {/* Status */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Trạng Thái"
-                value={formData.isActive}
-                onChange={(e) => handleInputChange('isActive', e.target.value)}
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
-                }}
-              >
-                <MenuItem value={true}>
-                  <Chip label="Hoạt động" color="success" size="small" />
-                </MenuItem>
-                <MenuItem value={false}>
-                  <Chip label="Vô hiệu hóa" color="error" size="small" />
-                </MenuItem>
-              </TextField>
-            </Grid>
+            </Box>
 
             {/* Password fields */}
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 type="password"
@@ -846,34 +867,44 @@ const UserManagement = () => {
                 required={!editingUser}
                 variant="outlined"
                 placeholder="Nhập mật khẩu..."
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
+                sx={inputFieldStyle}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Box component="span" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
+                        🔒
+                      </Box>
+                    </InputAdornment>
+                  ),
                 }}
               />
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 type="password"
-                label="Xác nhận mật khẩu"
+                label={!editingUser || formData.password ? "Xác nhận mật khẩu" : "Xác nhận mật khẩu"}
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                 required={!editingUser || formData.password}
                 variant="outlined"
                 placeholder="Nhập lại mật khẩu..."
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
+                error={formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword}
+                helperText={formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword ? "Mật khẩu không khớp" : ""}
+                sx={inputFieldStyle}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Box component="span" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
+                        🔐
+                      </Box>
+                    </InputAdornment>
+                  ),
                 }}
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </DialogContent>
 
         <DialogActions
@@ -881,17 +912,19 @@ const UserManagement = () => {
             p: 4,
             bgcolor: '#f8f9fa',
             gap: 2,
-            justifyContent: 'space-between',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             borderTop: '1px solid #e0e0e0'
           }}
         >
-          <Box>
+          <Box sx={{ width: '100%', textAlign: 'center', mb: 2 }}>
             <Typography variant="caption" color="text.secondary">
               * Các trường bắt buộc
             </Typography>
           </Box>
 
-          <Box display="flex" gap={2}>
+          <Box display="flex" gap={3} justifyContent="center">
             <Button
               onClick={handleCloseDialog}
               startIcon={<CancelIcon />}
