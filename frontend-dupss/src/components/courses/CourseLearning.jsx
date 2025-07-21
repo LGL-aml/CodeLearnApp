@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Box, Typography, Paper, List, ListItem, ListItemText, 
          ListItemButton, ListItemIcon, Collapse, Checkbox,
-         IconButton, styled, Breadcrumbs, Link, Button, Alert } from '@mui/material';
+         IconButton, styled, Breadcrumbs, Link, Button, Alert, CircularProgress } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
@@ -20,9 +20,10 @@ const PageContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   height: 'calc(100vh - 112px)', // Adjust height, considering Breadcrumb height
   overflow: 'hidden',
-  backgroundColor: '#fff',
-  border: '1px solid #e0e0e0',
+  backgroundColor: '#0E1621',
+  border: '1px solid #1E2A38',
   borderTop: 'none',
+  boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
   [theme.breakpoints.down('md')]: {
     flexDirection: 'column',
     height: 'auto',
@@ -37,9 +38,12 @@ const VideoPanel = styled(Box)(({ theme }) => ({
   flexDirection: 'column',
   overflowY: 'auto',
   height: '100%',
+  borderRadius: '4px 0 0 4px',
+  backgroundColor: '#0E1621',
   [theme.breakpoints.down('md')]: {
     flex: '1 1 auto',
     height: '60vh',
+    borderRadius: '4px 4px 0 0',
   }
 }));
 
@@ -47,18 +51,20 @@ const VideoPanel = styled(Box)(({ theme }) => ({
 const SidebarPanel = styled(Box)(({ theme }) => ({
   flex: '0 0 30%',
   maxWidth: '30%',
-  borderLeft: '1px solid #e0e0e0',
+  borderLeft: '1px solid #1E2A38',
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
   margin: 0,
   padding: 0,
-  backgroundColor: '#fdfdfd',
+  backgroundColor: '#0E1621',
+  borderRadius: '0 4px 4px 0',
   [theme.breakpoints.down('md')]: {
     flex: '1 1 auto',
     maxWidth: '100%',
     borderLeft: 'none',
-    borderTop: '1px solid #e0e0e0',
+    borderTop: '1px solid #1E2A38',
+    borderRadius: '0 0 4px 4px',
   }
 }));
 
@@ -71,13 +77,15 @@ const SidebarWrapper = styled(Box)(({ theme }) => ({
 
 const ContentHeader = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
-  borderBottom: '1px solid #e0e0e0',
-  backgroundColor: '#fff'
+  borderBottom: '1px solid #1E2A38',
+  backgroundColor: '#15202B',
+  color: '#fff'
 }));
 
 const ContentList = styled(Box)(({ theme }) => ({
   overflowY: 'auto',
   flexGrow: 1,
+  backgroundColor: '#0E1621',
 }));
 
 const SectionHeader = styled(ListItemButton)(({ theme }) => ({
@@ -120,23 +128,46 @@ const VideoPlayer = styled('iframe')(({ theme }) => ({
 // Breadcrumb container
 const BreadcrumbContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
-  backgroundColor: '#f5f5f5',
-  borderBottom: '1px solid #e0e0e0',
+  backgroundColor: '#15202B',
+  borderBottom: '1px solid #1E2A38',
+  color: 'white',
 }));
 
 // Progress Info container
 const ProgressInfoContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
-  backgroundColor: '#f5f8ff',
-  borderBottom: '1px solid #e0e0e0',
+  backgroundColor: '#192734',
+  borderBottom: '1px solid #1E2A38',
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   flexWrap: 'wrap',
   gap: theme.spacing(2),
+  color: 'white',
   [theme.breakpoints.down('md')]: {
     flexDirection: 'column',
     alignItems: 'flex-start',
+  }
+}));
+
+// Add new styled components for better UI
+const SectionHeaderStyled = styled(ListItemButton)(({ theme }) => ({
+  padding: theme.spacing(2, 2),
+  borderBottom: '1px solid #1E2A38',
+  backgroundColor: '#15202B',
+  color: 'white',
+  '&:hover': {
+    backgroundColor: '#192734',
+  }
+}));
+
+const VideoListItemButton = styled(ListItemButton)(({ theme, selected }) => ({
+  pl: 4,
+  py: 1.5,
+  borderLeft: selected ? '4px solid #2D9CDB' : '4px solid transparent',
+  backgroundColor: selected ? 'rgba(45, 156, 219, 0.1)' : 'transparent',
+  '&:hover': {
+    backgroundColor: 'rgba(45, 156, 219, 0.05)',
   }
 }));
 
@@ -756,26 +787,28 @@ function CourseLearning() {
   };
 
   if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-      <Typography>Đang tải...</Typography>
+    return <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', py: 8, backgroundColor: '#0E1621', height: '100vh' }}>
+      <CircularProgress size={60} thickness={4} sx={{ color: '#2D9CDB', mb: 2 }} />
+      <Typography variant="h6" sx={{ color: '#FFFFFF' }}>Đang tải...</Typography>
     </Box>;
   }
 
   // Check if course is completed
   const isCompleted = course && course.enrollmentStatus === "COMPLETED";
+  const allVideosWatched = videoStats.total > 0 && videoStats.completed === videoStats.total;
 
   return (
-    <Box>
+    <Box sx={{ backgroundColor: '#0E1621', color: 'white', minHeight: '100vh' }}>
       {/* Breadcrumb */}
       <BreadcrumbContainer>
         <Breadcrumbs 
-          separator={<NavigateNextIcon fontSize="small" sx={{ color: '#0056b3' }} />} 
+          separator={<NavigateNextIcon fontSize="small" sx={{ color: '#fff' }} />} 
           aria-label="breadcrumb"
         >
           <Link 
             component={RouterLink} 
             to="/courses" 
-            sx={{ color: '#0056b3', '&:hover': { color: '#003d82' } }}
+            sx={{ color: '#fff', '&:hover': { color: '#2D9CDB' } }}
             underline="hover"
           >
             Khóa học
@@ -783,42 +816,42 @@ function CourseLearning() {
           <Link 
             component={RouterLink} 
             to={`/courses/${id}`} 
-            sx={{ color: '#0056b3', '&:hover': { color: '#003d82' } }}
+            sx={{ color: '#fff', '&:hover': { color: '#2D9CDB' } }}
             underline="hover"
           >
             {course?.title || 'Chi tiết khóa học'}
           </Link>
-          <Typography sx={{ color: '#0056b3', fontWeight: 500 }}>Bài giảng</Typography>
+          <Typography sx={{ color: '#fff', fontWeight: 500 }}>Bài giảng</Typography>
         </Breadcrumbs>
       </BreadcrumbContainer>
 
       {/* Progress Info Section */}
       <ProgressInfoContainer>
         <Box sx={{ flex: '1 1 auto' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            {isCompleted ? (
-              <span style={{ color: '#27ae60' }}>Đã hoàn thành khóa học</span>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: 'white' }}>
+            {isCompleted || allVideosWatched ? (
+              <span style={{ color: '#4CAF50' }}>Đã hoàn thành khóa học</span>
             ) : (
-              <>Tiến độ hiện tại: <span style={{ color: courseProgress >= 100 ? '#27ae60' : '#0056b3' }}>{formatProgress(courseProgress)}%</span></>
+              <>Tiến độ hiện tại: <span style={{ color: courseProgress >= 100 ? '#4CAF50' : '#2D9CDB' }}>{formatProgress(courseProgress)}%</span></>
             )}
           </Typography>
-          <Typography variant="body2" sx={{ color: '#505050' }}>
-            {isCompleted ? 
+          <Typography variant="body2" sx={{ color: '#8899A6' }}>
+            {isCompleted || allVideosWatched ? 
               "Chúc mừng bạn đã hoàn thành khóa học! Bạn có thể xem lại video tại đây để củng cố thêm kiến thức cho mình nhé!" :
               "Sau khi xem hết video với tiến độ là 100%, bạn sẽ được tham gia làm kiểm tra để có thể hoàn thành khóa học"
             }
           </Typography>
         </Box>
-        {isCompleted ? (
+        {isCompleted || allVideosWatched ? (
           <Button
             variant="contained"
             startIcon={<EmojiEventsIcon />}
             onClick={handleCertificateClick}
             sx={{ 
               fontWeight: 'bold',
-              bgcolor: '#27ae60',
+              bgcolor: '#4CAF50',
               '&:hover': {
-                bgcolor: '#219653',
+                bgcolor: '#388E3C',
               }
             }}
           >
@@ -827,15 +860,14 @@ function CourseLearning() {
         ) : (
           <Button
             variant="contained"
-            color="secondary"
             startIcon={<AssignmentIcon />}
             disabled={courseProgress < 100}
             onClick={handleSurveyClick}
             sx={{ 
               fontWeight: 'bold',
-              bgcolor: courseProgress >= 100 ? '#27ae60' : undefined,
+              bgcolor: courseProgress >= 100 ? '#4CAF50' : '#2D9CDB',
               '&:hover': {
-                bgcolor: courseProgress >= 100 ? '#219653' : undefined,
+                bgcolor: courseProgress >= 100 ? '#388E3C' : '#1976D2',
               }
             }}
           >
@@ -865,7 +897,7 @@ function CourseLearning() {
               </VideoContainer>
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#8899A6' }}>
               <Typography>Vui lòng chọn một video để bắt đầu</Typography>
             </Box>
           )}
@@ -875,30 +907,30 @@ function CourseLearning() {
         <SidebarPanel>
           <SidebarWrapper>
             <ContentHeader>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>Course content</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>Nội dung khóa học</Typography>
             </ContentHeader>
             
             <ContentList>
               {modules.map((module, index) => (
                 <Box key={module.id}>
-                  <SectionHeader onClick={() => handleToggleModule(module.id)}>
+                  <SectionHeaderStyled onClick={() => handleToggleModule(module.id)}>
                     <Box sx={{ width: '100%' }}>
                       <SectionTitle>
-                        Section {index + 1}: {module.title}
+                        Phần {index + 1}: {module.title}
                       </SectionTitle>
                       <SectionInfo>
                         {getModuleCompletionCount(module)} | {module.videos ? `${module.videos.length} videos` : '0 videos'}
                       </SectionInfo>
                     </Box>
-                    <IconButton edge="end" sx={{ ml: 1 }}>
+                    <IconButton edge="end" sx={{ ml: 1, color: 'white' }}>
                       {module.isExpanded ? <ExpandLess /> : <ExpandMore />}
                     </IconButton>
-                  </SectionHeader>
+                  </SectionHeaderStyled>
                   
                   <Collapse in={module.isExpanded} timeout="auto">
-                    <List component="div" disablePadding sx={{ bgcolor: 'rgba(0,0,0,0.01)' }}>
+                    <List component="div" disablePadding sx={{ bgcolor: '#192734' }}>
                       {module.videoUrl.map((video) => (
-                        <ListItemButton 
+                        <VideoListItemButton 
                           key={video.id}
                           selected={currentVideo && currentVideo.id === video.id}
                           onClick={() => handleSelectVideo(video)}
@@ -906,7 +938,9 @@ function CourseLearning() {
                             pl: 4, 
                             py: 1.5,
                             borderLeft: currentVideo && currentVideo.id === video.id ? 
-                              '4px solid #3f51b5' : '4px solid transparent'
+                              '4px solid #2D9CDB' : '4px solid transparent',
+                            backgroundColor: currentVideo && currentVideo.id === video.id ? 
+                              'rgba(45, 156, 219, 0.1)' : 'transparent',
                           }}
                         >
                           <ListItemIcon sx={{ minWidth: 36 }}>
@@ -919,7 +953,7 @@ function CourseLearning() {
                                 handleVideoCompletion(video.id, video.completed);
                               }}
                               onClick={(e) => e.stopPropagation()}
-                              sx={{color: "#0056b3"}}
+                              sx={{color: video.completed ? "#4CAF50" : "#2D9CDB"}}
                               size="small"
                             />
                           </ListItemIcon>
@@ -928,10 +962,14 @@ function CourseLearning() {
                             secondary={video.duration > 0 ? formatDuration(video.duration) : null}
                             primaryTypographyProps={{
                               fontSize: '0.9rem',
-                              fontWeight: currentVideo && currentVideo.id === video.id ? 600 : 400
+                              fontWeight: currentVideo && currentVideo.id === video.id ? 600 : 400,
+                              color: video.completed ? '#4CAF50' : '#FFFFFF'
+                            }}
+                            secondaryTypographyProps={{
+                              color: '#8899A6'
                             }}
                           />
-                        </ListItemButton>
+                        </VideoListItemButton>
                       ))}
                     </List>
                   </Collapse>

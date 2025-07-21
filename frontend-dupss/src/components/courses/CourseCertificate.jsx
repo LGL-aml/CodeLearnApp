@@ -21,7 +21,16 @@ const CourseCertificate = () => {
       try {
         setLoading(true);
         const response = await axios.get(`${API_URL}/public/course/${courseId}/cert/${userId}`);
-        setCertificate(response.data);
+        console.log("Certificate API response:", response.data);
+        
+        // Kiểm tra cấu trúc dữ liệu
+        if (response.data && response.data.data) {
+          console.log("Certificate data found:", response.data.data);
+          setCertificate(response.data.data);
+        } else {
+          console.error("Unexpected API response structure:", response.data);
+          showErrorAlert("Dữ liệu chứng chỉ không đúng định dạng!");
+        }
       } catch (error) {
         console.error("Error fetching certificate data:", error);
         if (error.response && error.response.status === 400) {
@@ -72,10 +81,34 @@ const CourseCertificate = () => {
     );
   }
 
+  // Debug thông tin certificate
+  console.log("Certificate state:", certificate);
+
   if (!certificate) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography>Không tìm thấy chứng chỉ hoặc đã xảy ra lỗi.</Typography>
+        <Typography variant="h6" gutterBottom>Không tìm thấy chứng chỉ hoặc đã xảy ra lỗi.</Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          Vui lòng kiểm tra xem bạn đã hoàn thành khóa học chưa, hoặc liên hệ với quản trị viên.
+        </Typography>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          sx={{ mt: 2 }}
+          onClick={() => navigate(`/courses/${courseId}`)}
+        >
+          Quay lại khóa học
+        </Button>
+      </Box>
+    );
+  }
+  
+  // Kiểm tra các trường bắt buộc
+  if (!certificate.courseTitle || !certificate.username) {
+    console.error("Missing required certificate fields:", certificate);
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h6" gutterBottom color="error">Dữ liệu chứng chỉ không đầy đủ!</Typography>
         <Button 
           variant="contained" 
           color="primary" 
@@ -136,6 +169,9 @@ const CourseCertificate = () => {
             height: 0,
             paddingBottom: '70%', // Tỉ lệ khung hình
             position: 'relative',
+          }}
+          onError={(e) => {
+            console.error("Hình chứng chỉ không tải được:", e);
           }}
         >
           <Typography 
