@@ -1,6 +1,7 @@
 package com.jungle.courseshop.service;
 
 
+import com.jungle.courseshop.dto.request.AccessTokenRequest;
 import com.jungle.courseshop.dto.request.RegisterRequest;
 import com.jungle.courseshop.dto.request.UpdateUserRequest;
 import com.jungle.courseshop.dto.response.RegisterResponse;
@@ -26,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -130,6 +133,40 @@ public class UserService implements CommandLineRunner {
                 .build();
     }
 
+    public UserDetailResponse getCurrentUserInfo(AccessTokenRequest accessToken) {
+        String token = accessToken.getAccessToken();
+
+        if (token == null || token.trim().isEmpty()) {
+            throw new RuntimeException("Access token is missing");
+        }
+
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        String username = jwtService.getUsernameFromToken(token);
+        return userRepo.findByUsernameAndEnabledTrue(username)
+                .map(user -> {
+                    return UserDetailResponse.builder()
+                            .id(user.getId())
+                            .username(user.getUsername())
+                            .email(user.getEmail())
+                            .phone(user.getPhone())
+                            .fullName(user.getFullname())
+                            .gender(user.getGender())
+                            .yob(user.getYob())
+                            .avatar(user.getAvatar())
+                            .address(user.getAddress())
+                            .role(user.getRole().name())
+                            .build();
+                })
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public List<UserDetailResponse> getAllUsers() {
+        List<User> users = userRepo.findAllByEnabled(true);
+        return users.stream().map(this::mapToUserDetailResponse).collect(Collectors.toList());
+    }
 
     public UpdateUserResponse updateUserProfile(UpdateUserRequest request) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -204,6 +241,21 @@ public class UserService implements CommandLineRunner {
         userRepo.save(user);
 
         log.info("Admin deleted user: {} with ID: {}", user.getUsername(), userId);
+    }
+
+    private UserDetailResponse mapToUserDetailResponse(User user) {
+        return UserDetailResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .fullName(user.getFullname())
+                .yob(user.getYob())
+                .gender(user.getGender())
+                .phone(user.getPhone())
+                .address(user.getAddress())
+                .avatar(user.getAvatar())
+                .role(user.getRole().name())
+                .build();
     }
 
 }

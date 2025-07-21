@@ -259,6 +259,7 @@ public class CourseService {
                 .collect(Collectors.toList());
     }
 
+
     public CourseDetailPublicResponse getCoursePublicDetail(Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -277,7 +278,7 @@ public class CourseService {
             enrollmentStatus = enrollmentOpt.get().getStatus();
         }
 
-        List<CourseModule> modules = moduleRepository.findByCourse_ActiveTrueAndCourse_StatusOrderByOrderIndexAsc(ApprovalStatus.APPROVED);
+        List<CourseModule> modules = moduleRepository.findByCourseOrderByOrderIndexAsc(course);
         long enrollmentCount = enrollmentRepository.countByCourse(course);
 
         return CourseDetailPublicResponse.builder()
@@ -298,6 +299,27 @@ public class CourseService {
                                 .build())
                         .collect(Collectors.toList()))
                 .build();
+    }
+
+    public CourseResponse getCourseById(Long id){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User currentUser = userRepository.findByUsername(username).orElse(null);
+
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Course not found with id: " + id));
+
+        List<CourseModule> modules = moduleRepository.findByCourseOrderByOrderIndexAsc(course);
+
+        boolean isEnrolled = enrollmentRepository.existsByUserAndCourse(currentUser, course);
+        boolean isOwner = course.getCreator() != null && course.getCreator().equals(currentUser.getId());
+
+        if (!isEnrolled && !isOwner) {
+            throw new AccessDeniedException("You are not authorized to view this course.");
+        }
+
+        return mapToCourseResponse(course, modules, currentUser);
     }
 
     public List<CourseResponse> getCoursesByLecturer() {

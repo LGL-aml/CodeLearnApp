@@ -120,5 +120,13 @@ public class CourseController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/detail/{id}")
+    public ResponseEntity<CourseResponse> getCourseById(@PathVariable Long id) {
+        CourseResponse course = courseService.getCourseById(id);
+        return ResponseEntity.ok(course);
+    }
+
+
+
 
 }

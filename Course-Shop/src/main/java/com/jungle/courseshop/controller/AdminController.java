@@ -6,6 +6,7 @@ import com.jungle.courseshop.dto.request.UpdateUserRequest;
 import com.jungle.courseshop.dto.response.RegisterResponse;
 import com.jungle.courseshop.dto.response.TopicResponse;
 import com.jungle.courseshop.dto.response.UpdateUserResponse;
+import com.jungle.courseshop.dto.response.UserDetailResponse;
 import com.jungle.courseshop.entity.ApprovalStatus;
 import com.jungle.courseshop.service.CourseService;
 import com.jungle.courseshop.service.TopicService;
@@ -15,9 +16,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -36,6 +39,13 @@ public class AdminController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/users")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<UserDetailResponse>> getAllUsers() {
+        List<UserDetailResponse> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
     }
 
 
