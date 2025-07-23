@@ -91,7 +91,7 @@ public class UserService implements CommandLineRunner {
         String imgUser = "https://freesvg.org/img/abstract-user-flat-3.png";
 
         boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(auth -> auth.getAuthority().equals("ADMIN"));
 
         Role assignedRole = Role.MEMBER;
         if (isAdmin && request.getRole() != null) {

@@ -3,10 +3,7 @@ package com.jungle.courseshop.controller;
 import com.jungle.courseshop.dto.request.RegisterRequest;
 import com.jungle.courseshop.dto.request.TopicRequest;
 import com.jungle.courseshop.dto.request.UpdateUserRequest;
-import com.jungle.courseshop.dto.response.RegisterResponse;
-import com.jungle.courseshop.dto.response.TopicResponse;
-import com.jungle.courseshop.dto.response.UpdateUserResponse;
-import com.jungle.courseshop.dto.response.UserDetailResponse;
+import com.jungle.courseshop.dto.response.*;
 import com.jungle.courseshop.entity.ApprovalStatus;
 import com.jungle.courseshop.service.CourseService;
 import com.jungle.courseshop.service.TopicService;
@@ -32,12 +29,13 @@ public class AdminController {
     private final TopicService topicService;
 
     @PostMapping(value = "/users", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createUser(@Valid @ModelAttribute RegisterRequest request) {
+    public ResponseEntity<RestResponse<RegisterResponse>> createUser(@Valid @ModelAttribute RegisterRequest request) {
         try {
             RegisterResponse response = userService.createUser(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            RestResponse<RegisterResponse> restResponse = new RestResponse<>(HttpStatus.CREATED.value(), null, "User registered successfully", response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(restResponse);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+            return ResponseEntity.badRequest().body(null);
         }
     }
 

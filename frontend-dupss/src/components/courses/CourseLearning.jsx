@@ -842,7 +842,7 @@ function CourseLearning() {
         <Button
           variant="contained"
           startIcon={<EmojiEventsIcon />}
-          disabled={courseProgress < 100 || !isCompleted}
+          disabled={!isCompleted}
           onClick={handleCertificateClick}
           sx={{
             fontWeight: 'bold',
