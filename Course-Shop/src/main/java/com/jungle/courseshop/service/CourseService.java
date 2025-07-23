@@ -370,12 +370,10 @@ public class CourseService {
                 .collect(Collectors.toList());
 
         EnrollmentStatus enrollmentStatus = EnrollmentStatus.NOT_ENROLLED;
-        double progress = 0.0;
         if (currentUser != null) {
             Optional<CourseEnrollment> enrollmentOpt = enrollmentRepository.findByUserAndCourse(currentUser, course);
             if (enrollmentOpt.isPresent()) {
                 enrollmentStatus = enrollmentOpt.get().getStatus();
-                progress = enrollmentOpt.get().getProgress() != null ? enrollmentOpt.get().getProgress() : 0.0;
             }
         }
 
@@ -383,8 +381,10 @@ public class CourseService {
         return CourseResponse.builder()
                 .id(course.getId())
                 .title(course.getTitle())
+                .topicName(course.getTopic() != null ? course.getTopic().getName() : null)
                 .description(course.getDescription())
                 .content(course.getContent())
+                .duration(course.getDuration())
                 .coverImage(course.getCoverImage())
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
