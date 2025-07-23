@@ -374,9 +374,11 @@ const EditCourse = () => {
       formData.append('modules', JSON.stringify(courseData.modules));
       
       // Make the API call to update the course
-      // Some APIs use PUT instead of PATCH for updates with FormData
+      let response;
+      
       try {
-        const response = await apiClient.patch(`/courses/${id}`, formData, {
+        // Try PATCH first
+        response = await apiClient.patch(`/courses/${id}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
@@ -384,7 +386,7 @@ const EditCourse = () => {
       } catch (patchError) {
         console.error('PATCH request failed, trying PUT instead:', patchError);
         // If PATCH fails with 405, try PUT instead
-        const response = await apiClient.put(`/courses/${id}`, formData, {
+        response = await apiClient.put(`/courses/${id}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
