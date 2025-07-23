@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import {
   Box,
@@ -11,7 +11,6 @@ import {
   InputAdornment,
   IconButton,
   Paper,
-  Alert,
   CircularProgress,
 } from '@mui/material';
 import {
@@ -22,19 +21,22 @@ import {
   Computer as ComputerIcon
 } from '@mui/icons-material';
 import { getAccessToken, setUserInfo, checkAndRefreshToken } from '../utils/auth';
-import apiClient from '../services/apiService';
+import apiClient, { apiService } from '../services/apiService';
 import { API_URL } from '../services/config';
+import notificationService from '../services/NotificationService.jsx';
 
 const Login = ({ updateUserInfo }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
+
+  // Get the previous location from state if available
+  const from = location.state?.from || '/';
 
   // Kiểm tra đăng nhập khi load trang
   useEffect(() => {
@@ -42,17 +44,17 @@ const Login = ({ updateUserInfo }) => {
       const token = getAccessToken();
       if (token) {
         try {
-          const response = await apiClient.post('/auth/me', {
-            accessToken: token
-          });
+          const response = await apiService.getUserInfo(token);
           
           // Lưu thông tin người dùng
-          setUserInfo(response.data);
-          // Cập nhật state userInfo ở App component
-          if (updateUserInfo) updateUserInfo();
-          
-          // Nếu token hợp lệ, chuyển hướng người dùng theo role
-          handleRoleNavigation(response.data.role);
+          if (response.data) {
+            setUserInfo(response.data);
+            // Cập nhật state userInfo ở App component
+            if (updateUserInfo) updateUserInfo();
+            
+            // Nếu token hợp lệ, chuyển hướng người dùng theo role
+            handleRoleNavigation(response.data.role);
+          }
         } catch (err) {
           if (err.response && err.response.status === 401) {
             // Token hết hạn, thử refresh
@@ -60,15 +62,25 @@ const Login = ({ updateUserInfo }) => {
             if (refreshSuccess) {
               // Nếu refresh thành công, lấy lại thông tin người dùng
               try {
-                const userResponse = await apiClient.post('/auth/me', {
-                  accessToken: getAccessToken()
-                });
-                setUserInfo(userResponse.data);
-                // Cập nhật state userInfo ở App component
-                if (updateUserInfo) updateUserInfo();
-                handleRoleNavigation(userResponse.data.role);
+                const userResponse = await apiService.getUserInfo(getAccessToken());
+                
+                if (userResponse.data) {
+                  setUserInfo(userResponse.data);
+                  // Cập nhật state userInfo ở App component
+                  if (updateUserInfo) updateUserInfo();
+                  handleRoleNavigation(userResponse.data.role);
+                }
               } catch (error) {
                 console.error('Error fetching user info after token refresh:', error);
+                
+                // Extract and show error message from API response if available
+                if (error.response && error.response.data) {
+                  const errorData = error.response.data;
+                  const errorMessage = errorData.message || 'Không thể lấy thông tin người dùng';
+                  notificationService.error(errorMessage);
+                } else {
+                  notificationService.error('Không thể lấy thông tin người dùng');
+                }
               }
             }
           }
@@ -89,60 +101,80 @@ const Login = ({ updateUserInfo }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
     setLoading(true);
 
     // Kiểm tra thông tin đăng nhập
     if (!formData.username || !formData.password) {
-      setError('Vui lòng điền đầy đủ thông tin!');
+      notificationService.error('Vui lòng điền đầy đủ thông tin!');
       setLoading(false);
       return;
     }
 
     try {
-      const response = await apiClient.post('/auth/login', {
+      const response = await apiService.login({
         username: formData.username,
         password: formData.password
       });
 
-      // Lưu token vào local storage
-      localStorage.setItem('accessToken', response.data.accessToken);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
-      
-      setSuccess('Đăng nhập thành công!');
-      
-      // Gọi API lấy thông tin người dùng
-      try {
-        const userResponse = await apiClient.post('/auth/me', {
-          accessToken: response.data.accessToken
-        });
+      // Kiểm tra response có đúng định dạng mới không
+      if (response.data && response.data.statusCode === 200 && response.data.data) {
+        // Lưu token vào local storage
+        localStorage.setItem('accessToken', response.data.data.accessToken);
+        localStorage.setItem('refreshToken', response.data.data.refreshToken);
         
-        // Lưu thông tin người dùng
-        setUserInfo(userResponse.data);
-        // Cập nhật state userInfo ở App component
-        if (updateUserInfo) updateUserInfo();
+        notificationService.success(response.data.message || 'Đăng nhập thành công!');
         
-        // Xử lý điều hướng dựa trên role
-        setTimeout(() => {
-          handleRoleNavigation(userResponse.data.role);
-        }, 1000);
-        
-      } catch (err) {
-        setError('Không thể lấy thông tin người dùng');
-        console.error('User info error:', err);
-      }
-    } catch (err) {
-      if (err.response) {
-        if (err.response.status === 400 || err.response.status === 401) {
-          setError(err.response.data.message || 'Tên đăng nhập hoặc mật khẩu không đúng!');
-        } else {
-          setError('Có lỗi xảy ra. Vui lòng thử lại!');
+        // Gọi API lấy thông tin người dùng
+        try {
+          const userResponse = await apiService.getUserInfo(response.data.data.accessToken);
+          
+          // Lưu thông tin người dùng
+          if (userResponse.data) {
+            setUserInfo(userResponse.data);
+            // Cập nhật state userInfo ở App component
+            if (updateUserInfo) updateUserInfo();
+            
+            // Xử lý điều hướng dựa trên role
+            setTimeout(() => {
+              // If from is a login page or root, use role-based navigation
+              if (from === '/login' || from === '/') {
+                handleRoleNavigation(userResponse.data.role);
+              } else {
+                // Otherwise navigate to the previous page
+                navigate(from, { replace: true });
+              }
+            }, 1000);
+          }
+        } catch (err) {
+          console.error('User info error:', err);
+          
+          // Extract and show error message from API response if available
+          if (err.response && err.response.data) {
+            const errorData = err.response.data;
+            const errorMessage = errorData.message || 'Không thể lấy thông tin người dùng';
+            notificationService.error(errorMessage);
+          } else {
+            notificationService.error('Không thể lấy thông tin người dùng');
+          }
         }
       } else {
-        setError('Không thể kết nối đến máy chủ. Vui lòng thử lại sau!');
+        // Nếu response không đúng định dạng hoặc có lỗi
+        notificationService.error(response.data?.message || 'Đăng nhập không thành công!');
       }
+    } catch (err) {
       console.error('Login error:', err);
+      
+      // Extract and show error message from API response if available
+      if (err.response && err.response.data) {
+        const errorData = err.response.data;
+        const errorMessage = errorData.message || 'Tên đăng nhập hoặc mật khẩu không đúng!';
+        notificationService.error(errorMessage);
+      } else if (err.apiErrorMessage) {
+        // Use the enhanced error property if available
+        notificationService.error(err.apiErrorMessage);
+      } else {
+        notificationService.error('Không thể kết nối đến máy chủ. Vui lòng thử lại sau!');
+      }
     } finally {
       setLoading(false);
     }
@@ -151,27 +183,18 @@ const Login = ({ updateUserInfo }) => {
   // Hàm xử lý điều hướng dựa trên role
   const handleRoleNavigation = (role) => {
     if (!role) {
-      setError('Không tìm thấy thông tin vai trò trong tài khoản!');
+      notificationService.error('Không tìm thấy thông tin vai trò trong tài khoản!');
       return;
     }
     
     // Xử lý các chuỗi vai trò có định dạng ROLE_XXX
-    if (role.includes('ROLE_ADMIN') || role === 'admin') {
+    const roleUpper = role.toUpperCase();
+    if (roleUpper.includes('ADMIN')) {
       navigate('/admin/dashboard');
-    } else if (role.includes('ROLE_MANAGER') || role === 'manager') {
-      navigate('/manager/dashboard');
-    } else if (role.includes('ROLE_CONSULTANT') || role === 'consultant') {
-      navigate('/consultant/dashboard');
-    } else if (role.includes('ROLE_STAFF') || role === 'staff') {
-      navigate('/staff/dashboard');
-    } else if (role.includes('ROLE_MEMBER')) {
-      // Không cho phép member đăng nhập vào hệ thống
-      setError('Bạn không có quyền truy cập vào hệ thống này!');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('userInfo');
+    } else if (roleUpper.includes('LECTURER')) {
+      navigate('/staff/courses');
     } else {
-      setError('Bạn không có quyền truy cập vào hệ thống này!');
+      notificationService.error('Bạn không có quyền truy cập vào hệ thống này!');
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('userInfo');
@@ -240,18 +263,6 @@ const Login = ({ updateUserInfo }) => {
               Hệ thống quản lý khóa học và người dùng
             </Typography>
           </Box>
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          )}
-          
-          {success && (
-            <Alert severity="success" sx={{ mb: 3 }}>
-              {success}
-            </Alert>
-          )}
 
           <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: '400px', margin: '0 auto' }}>
             <Box sx={{ marginBottom: '20px' }}>
@@ -379,8 +390,6 @@ const Login = ({ updateUserInfo }) => {
                 </>
               ) : 'Đăng nhập'}
             </Button>
-
-
           </Box>
         </Box>
 

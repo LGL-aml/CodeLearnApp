@@ -65,7 +65,7 @@ const Header = ({ userName }) => {
     try {
       setLoggingOut(true);
       
-      // Use the logout utility function
+      // Use the logout utility function with new API format
       logout(() => {
         // Redirect to login page after logout completes
         navigate('/login');

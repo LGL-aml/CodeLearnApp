@@ -20,7 +20,6 @@ import {
   CircularProgress,
   InputAdornment,
   TablePagination,
-  Snackbar,
   Alert,
   Grid
 } from '@mui/material';
@@ -34,7 +33,8 @@ import {
   Cancel as CancelIcon,
   Description as DescriptionIcon
 } from '@mui/icons-material';
-import apiClient from '../../services/apiService';
+import apiClient, { apiService } from '../../services/apiService';
+import notificationService from '../../services/NotificationService.jsx';
 
 const TopicManagement = () => {
   // States
@@ -45,7 +45,6 @@ const TopicManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -97,29 +96,38 @@ const TopicManagement = () => {
   const fetchTopics = async () => {
     try {
       setLoading(true);
-      // Since we don't have an API endpoint for listing topics yet, we'll use mock data
-      console.log('Using mock data for topics as the API endpoint is not available yet');
-      setTopics(mockTopics);
-      
-      // When the API is available, uncomment the following:
-      // const response = await apiClient.get('/api/admin/topics');
-      // setTopics(response.data || []);
+      // Try to fetch topics from API
+      try {
+        const response = await apiService.getTopics();
+        if (response.data && Array.isArray(response.data)) {
+          setTopics(response.data);
+        } else {
+          // Fallback to mock data if API response is not as expected
+          console.log('Using mock data for topics as the API response is not in expected format');
+          setTopics(mockTopics);
+        }
+      } catch (apiError) {
+        console.error('Error fetching topics from API:', apiError);
+        
+        // Extract and show error message from API response if available
+        if (apiError.response && apiError.response.data) {
+          const errorData = apiError.response.data;
+          const errorMessage = errorData.message || 'Không thể tải danh sách chủ đề';
+          notificationService.error(errorMessage);
+        } else {
+          notificationService.error('Không thể tải danh sách chủ đề');
+        }
+        
+        // Use mock data if API call fails
+        setTopics(mockTopics);
+      }
     } catch (error) {
-      console.error('Error fetching topics:', error);
-      showSnackbar('Không thể tải danh sách chủ đề', 'error');
-      // Use mock data for development
+      console.error('Error in fetchTopics:', error);
+      notificationService.error('Không thể tải danh sách chủ đề');
       setTopics(mockTopics);
     } finally {
       setLoading(false);
     }
-  };
-
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
   };
 
   const handleOpenDialog = (topic = null) => {
@@ -157,7 +165,7 @@ const TopicManagement = () => {
 
   const validateForm = () => {
     if (!formData.name) {
-      showSnackbar('Vui lòng nhập tên chủ đề', 'error');
+      notificationService.error('Vui lòng nhập tên chủ đề');
       return false;
     }
     return true;
@@ -167,6 +175,7 @@ const TopicManagement = () => {
     if (!validateForm()) return;
 
     try {
+      setLoading(true);
       const topicData = {
         name: formData.name,
         description: formData.description || ''
@@ -174,31 +183,53 @@ const TopicManagement = () => {
 
       if (editingTopic) {
         // Update topic
-        await apiClient.patch(`/api/admin/topic/${editingTopic.id}`, topicData);
-        showSnackbar('Cập nhật chủ đề thành công!', 'success');
+        await apiService.updateTopic(editingTopic.id, topicData);
+        notificationService.success('Cập nhật chủ đề thành công!');
+        handleCloseDialog();
+        fetchTopics();
       } else {
         // Create new topic
-        await apiClient.post('/api/admin/topic', topicData);
-        showSnackbar('Tạo chủ đề thành công!', 'success');
+        await apiService.createTopic(topicData);
+        notificationService.success('Tạo chủ đề thành công!');
+        handleCloseDialog();
+        fetchTopics();
       }
-
-      handleCloseDialog();
-      fetchTopics();
     } catch (error) {
       console.error('Error saving topic:', error);
-      showSnackbar('Có lỗi xảy ra khi lưu chủ đề', 'error');
+      
+      // Extract and show error message from API response if available
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.message || 'Có lỗi xảy ra khi lưu chủ đề';
+        notificationService.error(errorMessage);
+      } else {
+        notificationService.error('Có lỗi xảy ra khi lưu chủ đề');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (topicId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa chủ đề này?')) {
       try {
-        await apiClient.patch(`/api/admin/topic/delete/${topicId}`);
-        showSnackbar('Xóa chủ đề thành công!', 'success');
+        setLoading(true);
+        await apiService.deleteTopic(topicId);
+        notificationService.success('Xóa chủ đề thành công!');
         fetchTopics();
       } catch (error) {
         console.error('Error deleting topic:', error);
-        showSnackbar('Có lỗi xảy ra khi xóa chủ đề', 'error');
+        
+        // Extract and show error message from API response if available
+        if (error.response && error.response.data) {
+          const errorData = error.response.data;
+          const errorMessage = errorData.message || 'Có lỗi xảy ra khi xóa chủ đề';
+          notificationService.error(errorMessage);
+        } else {
+          notificationService.error('Có lỗi xảy ra khi xóa chủ đề');
+        }
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -579,17 +610,8 @@ const TopicManagement = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {/* Snackbar for notifications - updated for better error display */}
+      {/* The Snackbar component is removed as per the edit hint. */}
     </Box>
   );
 };
