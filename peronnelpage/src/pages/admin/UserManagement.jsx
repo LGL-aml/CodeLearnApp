@@ -19,7 +19,6 @@ import {
   IconButton,
   Chip,
   Alert,
-  Snackbar,
   Grid,
   Avatar,
   Tooltip,
@@ -44,7 +43,8 @@ import {
   School as TeacherIcon,
   Code as StudentIcon
 } from '@mui/icons-material';
-import apiClient from '../../services/apiService';
+import apiClient, { apiService } from '../../services/apiService';
+import notificationService from '../../services/NotificationService.jsx';
 
 const UserManagement = () => {
   // States
@@ -56,7 +56,6 @@ const UserManagement = () => {
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -130,29 +129,38 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Since we don't have an API endpoint for listing users yet, we'll use mock data
-      console.log('Using mock data for users as the API endpoint is not available yet');
-      setUsers(mockUsers);
-      
-      // When the API is available, uncomment the following:
-      // const response = await apiClient.get('/api/admin/users');
-      // setUsers(response.data || []);
+      // Try to fetch users from API
+      try {
+        const response = await apiService.getUsers();
+        if (response.data && Array.isArray(response.data)) {
+          setUsers(response.data);
+        } else {
+          // Fallback to mock data if API response is not as expected
+          console.log('Using mock data for users as the API response is not in expected format');
+          setUsers(mockUsers);
+        }
+      } catch (apiError) {
+        console.error('Error fetching users from API:', apiError);
+        
+        // Extract and show error message from API response if available
+        if (apiError.response && apiError.response.data) {
+          const errorData = apiError.response.data;
+          const errorMessage = errorData.message || 'Không thể tải danh sách người dùng';
+          notificationService.error(errorMessage);
+        } else {
+          notificationService.error('Không thể tải danh sách người dùng');
+        }
+        
+        // Use mock data if API call fails
+        setUsers(mockUsers);
+      }
     } catch (error) {
-      console.error('Error fetching users:', error);
-      showSnackbar('Không thể tải danh sách người dùng', 'error');
-      // Use mock data for development
+      console.error('Error in fetchUsers:', error);
+      notificationService.error('Không thể tải danh sách người dùng');
       setUsers(mockUsers);
     } finally {
       setLoading(false);
     }
-  };
-
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
   };
 
   const handleOpenDialog = (user = null) => {
@@ -211,23 +219,23 @@ const UserManagement = () => {
 
   const validateForm = () => {
     if (!formData.fullName || !formData.email || !formData.role) {
-      showSnackbar('Vui lòng điền đầy đủ thông tin bắt buộc', 'error');
+      notificationService.error('Vui lòng điền đầy đủ thông tin bắt buộc');
       return false;
     }
 
     if (!editingUser && (!formData.password || !formData.confirmPassword)) {
-      showSnackbar('Vui lòng nhập mật khẩu', 'error');
+      notificationService.error('Vui lòng nhập mật khẩu');
       return false;
     }
 
     if (formData.password && formData.password !== formData.confirmPassword) {
-      showSnackbar('Mật khẩu xác nhận không khớp', 'error');
+      notificationService.error('Mật khẩu xác nhận không khớp');
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      showSnackbar('Email không hợp lệ', 'error');
+      notificationService.error('Email không hợp lệ');
       return false;
     }
 
@@ -238,6 +246,7 @@ const UserManagement = () => {
     if (!validateForm()) return;
 
     try {
+      setLoading(true);
       // Create FormData object for multipart/form-data
       const formDataObj = new FormData();
       formDataObj.append('username', formData.email); // Using email as username
@@ -270,43 +279,76 @@ const UserManagement = () => {
 
       if (editingUser) {
         // Update user
-        await apiClient.patch(`/api/admin/users/${editingUser.id}`, formDataObj);
-        showSnackbar('Cập nhật người dùng thành công!', 'success');
+        await apiService.updateUser(editingUser.id, formDataObj);
+        notificationService.success('Cập nhật người dùng thành công!');
+        handleCloseDialog();
+        fetchUsers();
       } else {
         // Create new user
-        await apiClient.post('/api/admin/users', formDataObj);
-        showSnackbar('Tạo người dùng thành công!', 'success');
+        await apiService.createUser(formDataObj);
+        notificationService.success('Tạo người dùng thành công!');
+        handleCloseDialog();
+        fetchUsers();
       }
-
-      handleCloseDialog();
-      fetchUsers();
     } catch (error) {
       console.error('Error saving user:', error);
-      showSnackbar('Có lỗi xảy ra khi lưu người dùng', 'error');
+      
+      // Extract and show error message from API response if available
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.message || 'Có lỗi xảy ra khi lưu người dùng';
+        notificationService.error(errorMessage);
+      } else {
+        notificationService.error('Có lỗi xảy ra khi lưu người dùng');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (userId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
       try {
-        await apiClient.patch(`/api/admin/users/delete/${userId}`);
-        showSnackbar('Xóa người dùng thành công!', 'success');
+        setLoading(true);
+        await apiService.deleteUser(userId);
+        notificationService.success('Xóa người dùng thành công!');
         fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
-        showSnackbar('Có lỗi xảy ra khi xóa người dùng', 'error');
+        
+        // Extract and show error message from API response if available
+        if (error.response && error.response.data) {
+          const errorData = error.response.data;
+          const errorMessage = errorData.message || 'Có lỗi xảy ra khi xóa người dùng';
+          notificationService.error(errorMessage);
+        } else {
+          notificationService.error('Có lỗi xảy ra khi xóa người dùng');
+        }
+      } finally {
+        setLoading(false);
       }
     }
   };
 
   const toggleUserStatus = async (userId, currentStatus) => {
     try {
+      setLoading(true);
       await apiClient.patch(`/users/${userId}/status`, { isActive: !currentStatus });
-      showSnackbar(`${!currentStatus ? 'Kích hoạt' : 'Vô hiệu hóa'} người dùng thành công!`, 'success');
+      notificationService.success(`${!currentStatus ? 'Kích hoạt' : 'Vô hiệu hóa'} người dùng thành công!`);
       fetchUsers();
     } catch (error) {
       console.error('Error updating user status:', error);
-      showSnackbar('Có lỗi xảy ra khi cập nhật trạng thái', 'error');
+      
+      // Extract and show error message from API response if available
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.message || 'Có lỗi xảy ra khi cập nhật trạng thái';
+        notificationService.error(errorMessage);
+      } else {
+        notificationService.error('Có lỗi xảy ra khi cập nhật trạng thái');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -334,9 +376,9 @@ const UserManagement = () => {
     setPage(0);
   };
 
-      const getRoleInfo = (role) => {
-     return userRoles.find(r => r.value === role) || { label: role, color: '#6b7280', icon: <PersonIcon />, iconComponent: PersonIcon };
-    };
+  const getRoleInfo = (role) => {
+    return userRoles.find(r => r.value === role) || { label: role, color: '#6b7280', icon: <PersonIcon />, iconComponent: PersonIcon };
+  };
 
   // Common styles for form fields
   const inputFieldStyle = {
@@ -975,17 +1017,8 @@ const UserManagement = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {/* Snackbar for notifications - updated for better error display */}
+      {/* The Snackbar component is removed as per the edit hint. */}
     </Box>
   );
 };

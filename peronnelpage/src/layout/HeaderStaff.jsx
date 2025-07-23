@@ -65,7 +65,7 @@ const HeaderStaff = ({ userName }) => {
     try {
       setLoggingOut(true);
       
-      // Use the logout utility function
+      // Use the logout utility function with new API format
       logout(() => {
         // Redirect to login page after logout completes
         navigate('/login');
@@ -77,9 +77,9 @@ const HeaderStaff = ({ userName }) => {
   };
 
   const menuItems = [
-    { text: 'Khóa Học Lập Trình', icon: <CodeIcon />, path: '/staff/courses' },
-    { text: 'Bài Tập Code', icon: <TerminalIcon />, path: '/staff/exercises' },
-    { text: 'Dự Án', icon: <AssignmentIcon />, path: '/staff/projects' }
+    { text: 'Khóa Học', icon: <CodeIcon />, path: '/staff/courses' },
+    { text: 'Bài Giảng', icon: <TerminalIcon />, path: '/staff/lectures' },
+    { text: 'Bài Tập', icon: <AssignmentIcon />, path: '/staff/exercises' }
   ];
 
   // Lấy chữ cái đầu tiên của tên người dùng để hiển thị trong Avatar nếu không có avatar
@@ -87,7 +87,7 @@ const HeaderStaff = ({ userName }) => {
     if (userName) {
       return userName.charAt(0).toUpperCase();
     }
-    return 'S';
+    return 'L';
   };
 
   return (
@@ -102,7 +102,7 @@ const HeaderStaff = ({ userName }) => {
         <Box display="flex" alignItems="center" sx={{ flexGrow: 0, mr: 4 }}>
           <ComputerIcon sx={{ mr: 1, fontSize: 28, color: '#fbbf24' }} />
           <Typography variant="h6" component="div" sx={{ fontWeight: 700, color: 'white' }}>
-            CodeLearn Staff
+            CodeLearn Lecturer
           </Typography>
         </Box>
 
@@ -133,7 +133,7 @@ const HeaderStaff = ({ userName }) => {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography variant="body1" sx={{ mr: 1 }}>
-            {userName || 'Staff'}
+            {userName || 'Lecturer'}
           </Typography>
           <IconButton
             onClick={handleClick}
@@ -147,7 +147,7 @@ const HeaderStaff = ({ userName }) => {
               <Avatar 
                 sx={{ width: 32, height: 32 }} 
                 src={userInfo.avatar}
-                alt={userName || 'Staff'}
+                alt={userName || 'Lecturer'}
               />
             ) : (
               <Avatar sx={{ width: 32, height: 32, bgcolor: '#ff5722' }}>{getAvatarText()}</Avatar>

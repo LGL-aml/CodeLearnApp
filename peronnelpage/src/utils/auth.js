@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_URL } from '../services/config';
+import { apiService } from '../services/apiService';
 
 /**
  * Xóa token khỏi localStorage và đăng xuất người dùng
@@ -11,7 +12,8 @@ export const logout = async (callback) => {
     
     if (accessToken) {
       // Gọi API logout - truyền accessToken trong request body
-      await axios.post(`${API_URL}/auth/logout`, { accessToken });
+      const response = await apiService.logout(accessToken);
+      console.log('Logout response:', response.data?.message || 'Đăng xuất thành công');
     }
   } catch (error) {
     console.error('Logout error:', error);
@@ -116,8 +118,8 @@ export const checkAndRefreshToken = async () => {
   
   try {
     // Kiểm tra token hiện tại
-    await axios.post(`${API_URL}/auth/me`, { accessToken });
-    return true;
+    const response = await apiService.getUserInfo(accessToken);
+    return !!response.data;
   } catch (err) {
     if (err.response && err.response.status === 401) {
       // Token hết hạn, thử refresh
@@ -137,13 +139,15 @@ export const refreshAccessToken = async () => {
   if (!refreshToken) return false;
   
   try {
-    const response = await axios.post(`${API_URL}/auth/refresh-token`, {
-      refreshToken
-    });
+    const response = await apiService.refreshToken(refreshToken);
     
-    // Lưu token mới
-    localStorage.setItem('accessToken', response.data.accessToken);
-    return true;
+    // Kiểm tra response có đúng định dạng mới không
+    if (response.data && response.data.statusCode === 200 && response.data.data) {
+      // Lưu token mới
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+      return true;
+    }
+    return false;
   } catch (err) {
     // Refresh token không hợp lệ hoặc hết hạn
     logout();
