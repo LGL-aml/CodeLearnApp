@@ -1,6 +1,7 @@
 package com.jungle.courseshop.controller;
 
 import com.jungle.courseshop.dto.request.TopicRequest;
+import com.jungle.courseshop.dto.response.CourseResponse;
 import com.jungle.courseshop.dto.response.RestResponse;
 import com.jungle.courseshop.dto.response.TopicResponse;
 import com.jungle.courseshop.repository.TopicRepo;
@@ -32,14 +33,26 @@ public class LecturerController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/course/{id}/delete")
-    public ResponseEntity<?> deleteCourse(@PathVariable Long id) {
-        try{
-            courseService.deleteCourse(id);
-            return ResponseEntity.ok(Map.of("message", "Khóa học đã được xóa thành công"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi: " + e.getMessage()));
+    @GetMapping("/courses")
+    public ResponseEntity<RestResponse<List<CourseResponse>>> getMyCourses() {
+        try {
+            List<CourseResponse> courses = courseService.getCreatedCourses();
+            RestResponse<List<CourseResponse>> response = new RestResponse<>(HttpStatus.OK.value(), null, "Courses fetched successfully", courses);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
+    }
+
+    @GetMapping("course/{id}")
+    public ResponseEntity<RestResponse<CourseResponse>> getCourse(@PathVariable Long id) {
+        CourseResponse courseResponse = courseService.getCourseById(id);
+        if (courseResponse == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(null);
+        }
+        RestResponse<CourseResponse> response = new RestResponse<>(HttpStatus.OK.value(), null, "Course fetched successfully", courseResponse);
+        return ResponseEntity.ok(response);
     }
 
 }

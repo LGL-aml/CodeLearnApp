@@ -111,7 +111,6 @@ public class CourseService {
     }
 
 
-
     @Transactional
     public CourseResponse updateCourse(Long id, CourseUpdateRequest request) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -182,21 +181,28 @@ public class CourseService {
         return mapToCourseResponse(savedCourse, modules, currentUser);
     }
 
-    public void updateStatus(Long courseId, ApprovalStatus status) {
+    public List<CourseResponse> getCreatedCourses() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        User currentUser = userRepository.findByUsernameAndEnabledTrue(username)
+
+        User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Course course = courseRepository.findByIdAndActiveTrue(courseId)
-                .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + courseId));
-        if(course.getStatus().equals(ApprovalStatus.PENDING)) {
-            course.setStatus(status);
-        } else {
-            throw new RuntimeException("Blog đã được phê duyệt hoặc từ chối, không thể cập nhật trạng thái");
+
+        List<Course> courses = courseRepository.findByCreatorAndActiveTrue(currentUser);
+        if (courses.isEmpty()) {
+            throw new ResourceNotFoundException("No courses found for the current user");
         }
-        courseRepository.save(course);
+        return courses.stream()
+                .map(course -> {
+                    List<CourseModule> modules = moduleRepository.findByCourseOrderByOrderIndexAsc(course);
+                    return mapToCourseResponse(course, modules, currentUser);
+                })
+                .collect(Collectors.toList());
     }
+
+
+
 
     @Transactional
     public void softDeleteCourse(Long id) {
@@ -307,7 +313,7 @@ public class CourseService {
 
         User currentUser = userRepository.findByUsername(username).orElse(null);
 
-        Course course = courseRepository.findById(id)
+        Course course = courseRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new RuntimeException("Course not found with id: " + id));
 
         List<CourseModule> modules = moduleRepository.findByCourseOrderByOrderIndexAsc(course);
