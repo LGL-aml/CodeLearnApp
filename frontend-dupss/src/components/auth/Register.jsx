@@ -651,64 +651,7 @@ const Register = () => {
               ) : 'Đăng ký'}
             </Button>
 
-            <Box sx={{ 
-              textAlign: 'center', 
-              position: 'relative',
-              margin: '25px 0',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: '50%',
-                left: 0,
-                width: 'calc(50% - 70px)',
-                height: '1px',
-                backgroundColor: 'var(--border-primary)'
-              },
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                top: '50%',
-                right: 0,
-                width: 'calc(50% - 70px)',
-                height: '1px',
-                backgroundColor: 'var(--border-primary)'
-              }
-            }}>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  display: 'inline-block',
-                  padding: '0 15px',
-                  backgroundColor: 'var(--bg-secondary)',
-                  position: 'relative',
-                  color: 'var(--text-muted)'
-                }}
-              >
-                Hoặc đăng ký bằng
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: '25px', width: '100%' }}>
-              <Button
-                variant="outlined"
-                startIcon={<CodeIcon />}
-                sx={{
-                  width: '100%',
-                  padding: '10px',
-                  borderColor: 'var(--border-primary)',
-                  color: 'var(--accent-primary)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(88, 166, 255, 0.1)',
-                    borderColor: 'var(--accent-primary)'
-                  },
-                  textTransform: 'none'
-                }}
-              >
-                GitHub
-              </Button>
-            </Box>
-
-            <Box sx={{ textAlign: 'center' }}>
+            <Box sx={{ textAlign: 'center', marginTop: '20px' }}>
               <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
                 Đã có tài khoản? {' '}
                 <Button 
