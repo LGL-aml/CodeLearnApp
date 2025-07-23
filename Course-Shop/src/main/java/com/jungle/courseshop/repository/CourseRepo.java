@@ -16,17 +16,16 @@ import java.util.Optional;
 @Repository
 public interface CourseRepo extends JpaRepository<Course, Long> {
     List<Course> findByCreatorAndActiveTrue(User creator);
-    List<Course> findTop3ByStatusAndActiveTrueOrderByCreatedAtDesc(ApprovalStatus status);
-    List<Course> findByStatusAndActiveTrue(ApprovalStatus status);
+    List<Course> findTop3ByActiveTrueOrderByCreatedAtDesc();
+    List<Course> findByActiveTrue();
     Optional<Course> findByIdAndActiveTrue(Long id);
 
     @Query("SELECT c FROM Course c " +
-            "WHERE c.status = com.jungle.courseshop.entity.ApprovalStatus.APPROVED AND " +
-            "c.active = true AND (" +
+            "WHERE c.active = true AND " +
             "(:topic IS NULL OR c.topic.id = :topic) AND (" +
             "LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(c.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(c.topic.name) LIKE LOWER(CONCAT('%', :keyword, '%'))" +
-            "))")
+            ")")
     Page<Course> searchCourses(@Param("keyword") String keyword, @Param("topic") Long Topic,  Pageable pageable);
 }

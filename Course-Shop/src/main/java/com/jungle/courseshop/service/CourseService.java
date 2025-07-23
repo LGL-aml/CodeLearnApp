@@ -67,7 +67,6 @@ public class CourseService {
         course.setDuration(request.getDuration());
         course.setActive(true);
         course.setCreator(currentUser);
-        course.setStatus(ApprovalStatus.PENDING);
 
         if (request.getCoverImage() != null && !request.getCoverImage().isEmpty()) {
             String imageUrl = cloudinaryService.uploadFile(request.getCoverImage());
@@ -140,8 +139,6 @@ public class CourseService {
             String imageUrl = cloudinaryService.uploadFile(request.getCoverImage());
             course.setCoverImage(imageUrl);
         }
-        // Khi update, status về PENDING để duyệt lại
-        course.setStatus(ApprovalStatus.PENDING);
 
         // Xử lý cập nhật modules và videos nếu có
         if (request.getModules() != null) {
@@ -240,12 +237,12 @@ public class CourseService {
 
         User currentUser = userRepository.findByUsername(username).orElse(null);
 
-        List<Course> courses = courseRepository.findTop3ByStatusAndActiveTrueOrderByCreatedAtDesc(ApprovalStatus.APPROVED);
+        List<Course> courses = courseRepository.findTop3ByActiveTrueOrderByCreatedAtDesc();
 
 
         return courses.stream()
                 .map(course -> {
-                    List<CourseModule> modules = moduleRepository.findByCourse_ActiveTrueAndCourse_StatusOrderByOrderIndexAsc(ApprovalStatus.APPROVED);
+                    List<CourseModule> modules = moduleRepository.findByCourse_ActiveTrueOrderByOrderIndexAsc();
                     boolean isEnrolled = false;
                     if (currentUser != null) {
                         isEnrolled = enrollmentRepository.existsByUserAndCourse(currentUser, course);
@@ -395,7 +392,6 @@ public class CourseService {
                 .modules(moduleResponses)
                 .enrollmentCount(course.getEnrolledCount())
                 .enrollmentStatus(enrollmentStatus)
-                .progress(progress)
                 .build();
     }
 
