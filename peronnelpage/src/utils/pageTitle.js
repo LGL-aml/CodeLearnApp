@@ -3,7 +3,7 @@
  */
 
 // Base title for the application
-const baseTitle = 'CodeLearn Management';
+const baseTitle = 'Quản Lý Khóa Học';
 
 /**
  * Set the page title with the format: "Page Name - CodeLearn Management"

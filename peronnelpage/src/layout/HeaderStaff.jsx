@@ -84,7 +84,7 @@ const HeaderStaff = ({ userName }) => {
     if (userName) {
       return userName.charAt(0).toUpperCase();
     }
-    return 'L';
+    return 'G';
   };
 
   return (
@@ -99,7 +99,7 @@ const HeaderStaff = ({ userName }) => {
         <Box display="flex" alignItems="center" sx={{ flexGrow: 0, mr: 4 }}>
           <Box component="img" src="/favicon.svg" alt="Logo" sx={{ width: 32, height: 32, mr: 1 }} />
           <Typography variant="h6" component="div" sx={{ fontWeight: 700, color: 'white' }}>
-            CodeLearn Management
+            Quản Lý Khóa Học
           </Typography>
         </Box>
 
@@ -130,7 +130,7 @@ const HeaderStaff = ({ userName }) => {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography variant="body1" sx={{ mr: 1 }}>
-            {userName || 'Lecturer'}
+            {userName || 'Giảng viên'}
           </Typography>
           <IconButton
             onClick={handleClick}
@@ -144,7 +144,7 @@ const HeaderStaff = ({ userName }) => {
               <Avatar 
                 sx={{ width: 32, height: 32 }} 
                 src={userInfo.avatar}
-                alt={userName || 'Lecturer'}
+                alt={userName || 'Giảng viên'}
               />
             ) : (
               <Avatar sx={{ width: 32, height: 32, bgcolor: '#ff5722' }}>{getAvatarText()}</Avatar>
@@ -166,14 +166,14 @@ const HeaderStaff = ({ userName }) => {
             <ListItemIcon>
               <AccountCircle fontSize="small" />
             </ListItemIcon>
-            Profile
+            Hồ sơ cá nhân
           </MenuItem>
           <Divider />
           <MenuItem onClick={handleLogout} disabled={loggingOut}>
             <ListItemIcon>
               <Logout fontSize="small" />
             </ListItemIcon>
-            {loggingOut ? 'Logging out...' : 'Logout'}
+            {loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
           </MenuItem>
         </Menu>
       </Toolbar>

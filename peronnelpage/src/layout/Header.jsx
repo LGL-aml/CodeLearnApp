@@ -100,7 +100,7 @@ const Header = ({ userName }) => {
         <Box display="flex" alignItems="center" sx={{ flexGrow: 0, mr: 4 }}>
           <Box component="img" src="/favicon.svg" alt="Logo" sx={{ width: 32, height: 32, mr: 1 }} />
           <Typography variant="h6" component="div" sx={{ fontWeight: 700, color: 'white' }}>
-            CodeLearn Management
+            Quản Lý Khóa Học
           </Typography>
         </Box>
 
@@ -131,7 +131,7 @@ const Header = ({ userName }) => {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography variant="body1" sx={{ mr: 1 }}>
-            {userName || 'Admin'}
+            {userName || 'Quản trị viên'}
           </Typography>
           <IconButton
             onClick={handleClick}
@@ -145,7 +145,7 @@ const Header = ({ userName }) => {
               <Avatar 
                 sx={{ width: 32, height: 32 }} 
                 src={userInfo.avatar}
-                alt={userName || 'Admin'}
+                alt={userName || 'Quản trị viên'}
               />
             ) : (
               <Avatar sx={{ width: 32, height: 32, bgcolor: '#1565c0' }}>{getAvatarText()}</Avatar>
@@ -166,14 +166,14 @@ const Header = ({ userName }) => {
             <ListItemIcon>
               <AccountCircle fontSize="small" />
             </ListItemIcon>
-            Profile
+            Hồ sơ cá nhân
           </MenuItem>
           <Divider />
           <MenuItem onClick={handleLogout} disabled={loggingOut}>
             <ListItemIcon>
               <Logout fontSize="small" />
             </ListItemIcon>
-            {loggingOut ? 'Logging out...' : 'Logout'}
+            {loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
           </MenuItem>
         </Menu>
       </Toolbar>

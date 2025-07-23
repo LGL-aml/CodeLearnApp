@@ -249,14 +249,14 @@ const CreateCourse = () => {
     const currentContent = editorRef.current ? editorRef.current.getContent() : course.content;
     
     if (!course.title || !course.topicId || !course.description || !currentContent) {
-      showSnackbar('Please fill in all required fields', 'error');
+      showSnackbar('Vui lòng điền đầy đủ các trường bắt buộc', 'error');
       return;
     }
 
     // Set submitting state
     setIsSubmitting(true);
     // Show processing notification
-    showSnackbar('Processing request...', 'info');
+    showSnackbar('Đang xử lý yêu cầu...', 'info');
 
     try {
       const token = getAccessToken();
@@ -298,7 +298,7 @@ const CreateCourse = () => {
       });
       
       console.log('Course creation response:', response);
-      NotificationService.success('Course created successfully!');
+      NotificationService.success('Tạo khóa học thành công!');
       
       // Clear the form and draft
       localStorage.removeItem('courseDraft');
@@ -319,13 +319,13 @@ const CreateCourse = () => {
     } catch (error) {
       console.error('Error creating course:', error);
       // More detailed error message
-      let errorMsg = 'Error creating course';
+      let errorMsg = 'Lỗi khi tạo khóa học';
       if (error.response) {
         // The request was made and the server responded with a status code
         errorMsg += `: ${error.response.status} - ${error.response.data?.message || JSON.stringify(error.response.data)}`;
       } else if (error.request) {
         // The request was made but no response was received
-        errorMsg += ': No response received from server, please try again later';
+        errorMsg += ': Không nhận được phản hồi từ máy chủ, vui lòng thử lại sau';
       } else {
         // Something happened in setting up the request
         errorMsg += `: ${error.message}`;
@@ -340,9 +340,9 @@ const CreateCourse = () => {
   // Handle saving draft
   const handleSaveDraft = () => {
     if (saveDraft()) {
-      showSnackbar('Draft saved successfully!', 'success');
+      showSnackbar('Lưu nháp thành công!', 'success');
     } else {
-      showSnackbar('Error saving draft', 'error');
+      showSnackbar('Lỗi khi lưu nháp', 'error');
     }
   };
 
@@ -361,10 +361,10 @@ const CreateCourse = () => {
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Box>
             <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
-              Create New Course
+              Tạo Khóa Học Mới
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Create a new programming course with modules and videos
+              Tạo một khóa học lập trình mới với các mô-đun và video
             </Typography>
           </Box>
         </Box>
@@ -374,7 +374,7 @@ const CreateCourse = () => {
         {/* Course title */}
         <TextField
           fullWidth
-          label="Course Title"
+          label="Tên Khóa Học"
           name="title"
           value={course.title}
           onChange={handleChange}
@@ -394,7 +394,7 @@ const CreateCourse = () => {
           <TextField
             select
             fullWidth
-            label="Topic"
+            label="Chủ Đề"
             name="topicId"
             value={course.topicId}
             onChange={handleChange}
@@ -407,17 +407,17 @@ const CreateCourse = () => {
               }
             }}
             error={!!apiError}
-            helperText={apiError ? 'Error loading topics' : ''}
+            helperText={apiError ? 'Lỗi khi tải chủ đề' : ''}
           >
             {topics.length === 0 && (
               <MenuItem disabled value="">
-                No topics available - Check console for errors
+                Không có chủ đề nào - Kiểm tra lỗi trong console
               </MenuItem>
             )}
             
             {topics.map(topic => (
               <MenuItem key={topic.id} value={topic.id}>
-                {topic.topicName || "Unnamed Topic"}
+                {topic.topicName || "Chủ đề không có tên"}
               </MenuItem>
             ))}
           </TextField>
@@ -442,7 +442,7 @@ const CreateCourse = () => {
                 fullWidth
                 sx={{ height: '100%' }}
               >
-                Choose Image
+                Chọn Ảnh
                 <input
                   type="file"
                   hidden
@@ -454,7 +454,7 @@ const CreateCourse = () => {
               <>
                 <img
                   src={imagePreview}
-                  alt="Course preview"
+                  alt="Ảnh xem trước"
                   style={{ maxWidth: '100%', maxHeight: 54, objectFit: 'cover' }}
                 />
                 <IconButton
@@ -480,7 +480,7 @@ const CreateCourse = () => {
         {/* Description */}
         <TextField
           fullWidth
-          label="Description"
+          label="Mô Tả"
           name="description"
           value={course.description}
           onChange={handleChange}
@@ -499,7 +499,7 @@ const CreateCourse = () => {
         {/* TinyMCE Editor */}
         <Box sx={{ mb: 4 }}>
           <Box sx={{ mb: 2 }}>
-            <Typography variant="body1" fontWeight="medium">Course Content</Typography>
+            <Typography variant="body1" fontWeight="medium">Nội Dung Khóa Học</Typography>
           </Box>
           
           <Paper 
@@ -514,7 +514,7 @@ const CreateCourse = () => {
           >
             <Box sx={{ p: 1, borderBottom: '1px solid #e0e0e0', bgcolor: '#f5f5f5' }}>
               <Typography variant="body2" color="text.secondary">
-                WYSIWYG Editor
+                Trình Soạn Thảo WYSIWYG
               </Typography>
             </Box>
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
@@ -564,7 +564,7 @@ const CreateCourse = () => {
         {/* Duration */}
         <TextField
           fullWidth
-          label="Duration (hours)"
+          label="Thời Lượng (giờ)"
           name="duration"
           type="number"
           value={course.duration}
@@ -587,7 +587,7 @@ const CreateCourse = () => {
         {/* Modules section */}
         <Box sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h6">Modules</Typography>
+            <Typography variant="h6">Mô-đun</Typography>
             <Button
               variant="outlined"
               startIcon={<AddIcon />}
@@ -603,7 +603,7 @@ const CreateCourse = () => {
                 transition: 'all 0.2s ease'
               }}
             >
-              Add Module
+              Thêm Mô-đun
             </Button>
           </Box>
           
@@ -638,7 +638,7 @@ const CreateCourse = () => {
               {/* Module order_index field */}
               <TextField
                 fullWidth
-                label="Order Index"
+                label="Thứ Tự"
                 type="number"
                 value={module.orderIndex}
                 InputProps={{
@@ -657,7 +657,7 @@ const CreateCourse = () => {
               {/* Module title field */}
               <TextField
                 fullWidth
-                label="Module Title"
+                label="Tên Mô-đun"
                 value={module.title}
                 onChange={(e) => updateModule(moduleIndex, 'title', e.target.value)}
                 variant="outlined"
@@ -687,7 +687,7 @@ const CreateCourse = () => {
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  Add Video
+                  Thêm Video
                 </Button>
               </Box>
               
@@ -724,7 +724,7 @@ const CreateCourse = () => {
                   {/* Video title */}
                   <TextField
                     fullWidth
-                    label="Video Title"
+                    label="Tên Video"
                     value={video.title}
                     onChange={(e) => updateVideo(moduleIndex, videoIndex, 'title', e.target.value)}
                     variant="outlined"
@@ -740,7 +740,7 @@ const CreateCourse = () => {
                   {/* Video URL */}
                   <TextField
                     fullWidth
-                    label="Video URL"
+                    label="URL Video"
                     value={video.videoUrl}
                     onChange={(e) => updateVideo(moduleIndex, videoIndex, 'videoUrl', e.target.value)}
                     variant="outlined"
@@ -775,7 +775,7 @@ const CreateCourse = () => {
               transition: 'all 0.2s ease'
             }}
           >
-            Save Draft
+            Lưu Nháp
           </Button>
           <Button
             type="submit"
@@ -793,14 +793,14 @@ const CreateCourse = () => {
               boxShadow: '0 3px 8px rgba(5, 150, 105, 0.2)'
             }}
           >
-            {isSubmitting ? 'Processing...' : 'Create Course'}
+            {isSubmitting ? 'Đang xử lý...' : 'Tạo Khóa Học'}
           </Button>
         </Box>
       </Box>
       
       {lastSaved && (
         <Typography variant="caption" color="text.secondary" align="center" sx={{ mt: 2, display: 'block' }}>
-          Last auto-save: {lastSaved.toLocaleTimeString()}
+          Lưu tự động lần cuối: {lastSaved.toLocaleTimeString()}
         </Typography>
       )}
       

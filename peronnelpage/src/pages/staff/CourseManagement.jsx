@@ -372,10 +372,10 @@ const CourseManagement = () => {
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                   <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
-                    No courses found
+                    Không tìm thấy khóa học nào
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Create your first course by clicking the "Create Course" button
+                    Tạo khóa học đầu tiên bằng cách nhấn vào nút "Tạo Khóa Học Mới"
                   </Typography>
                 </TableCell>
               </TableRow>

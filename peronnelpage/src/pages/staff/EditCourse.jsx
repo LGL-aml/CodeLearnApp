@@ -335,14 +335,14 @@ const EditCourse = () => {
     const currentContent = editorRef.current ? editorRef.current.getContent() : course.content;
     
     if (!course.title || !course.topicId || !course.description || !currentContent) {
-      showSnackbar('Please fill in all required fields', 'error');
+      showSnackbar('Vui lòng điền đầy đủ các trường bắt buộc', 'error');
       return;
     }
 
     // Set submitting state
     setIsSubmitting(true);
     // Show processing notification
-    showSnackbar('Processing request...', 'info');
+    showSnackbar('Đang xử lý yêu cầu...', 'info');
 
     try {
       const token = getAccessToken();
@@ -394,7 +394,7 @@ const EditCourse = () => {
       }
       
       console.log('Course update response:', response);
-      NotificationService.success('Course updated successfully!');
+      NotificationService.success('Cập nhật khóa học thành công!');
       
       // Clear the draft
       localStorage.removeItem(`courseDraft_${id}`);
@@ -426,9 +426,9 @@ const EditCourse = () => {
   // Handle saving draft
   const handleSaveDraft = () => {
     if (saveDraft()) {
-      showSnackbar('Draft saved successfully!', 'success');
+      showSnackbar('Nháp đã lưu thành công!', 'success');
     } else {
-      showSnackbar('Error saving draft', 'error');
+      showSnackbar('Lỗi khi lưu nháp', 'error');
     }
   };
 
@@ -455,10 +455,10 @@ const EditCourse = () => {
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Box>
             <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
-              Edit Course
+              Chỉnh Sửa Khóa Học
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Update your course information, modules and videos
+              Cập nhật thông tin, mô-đun và video cho khóa học của bạn
             </Typography>
           </Box>
           <Button
@@ -482,7 +482,7 @@ const EditCourse = () => {
               transition: 'all 0.3s ease'
             }}
           >
-            Back to Courses
+            Quay Lại Danh Sách
           </Button>
         </Box>
       </Paper>
@@ -491,7 +491,7 @@ const EditCourse = () => {
         {/* Course title */}
         <TextField
           fullWidth
-          label="Course Title"
+          label="Tên Khóa Học"
           name="title"
           value={course.title}
           onChange={handleChange}
@@ -511,7 +511,7 @@ const EditCourse = () => {
           <TextField
             select
             fullWidth
-            label="Topic"
+            label="Chủ Đề"
             name="topicId"
             value={course.topicId || ''}
             onChange={handleChange}
@@ -524,22 +524,22 @@ const EditCourse = () => {
               }
             }}
             error={!!apiError}
-            helperText={apiError ? 'Error loading topics' : ''}
+            helperText={apiError ? 'Lỗi khi tải chủ đề' : ''}
           >
             <MenuItem value="">
-              <em>Select a topic</em>
+              <em>Chọn chủ đề</em>
             </MenuItem>
             
             {topics.length === 0 ? (
               <MenuItem disabled value="">
-                No topics available - Check console for errors
+                Không có chủ đề nào - Kiểm tra lỗi trong console
               </MenuItem>
             ) : (
               topics.map(topic => {
                 console.log(`Rendering topic option: ${topic.topicName} (${topic.id}), selected: ${course.topicId === topic.id.toString()}`);
                 return (
                   <MenuItem key={topic.id} value={topic.id.toString()}>
-                    {topic.topicName || "Unnamed Topic"}
+                    {topic.topicName || "Chủ đề không có tên"}
                   </MenuItem>
                 );
               })
@@ -566,7 +566,7 @@ const EditCourse = () => {
                 fullWidth
                 sx={{ height: '100%' }}
               >
-                Choose Image
+                Chọn Ảnh
                 <input
                   type="file"
                   hidden
@@ -578,7 +578,7 @@ const EditCourse = () => {
               <>
                 <img
                   src={imagePreview}
-                  alt="Course preview"
+                  alt="Ảnh xem trước"
                   style={{ maxWidth: '100%', maxHeight: 54, objectFit: 'cover' }}
                 />
                 <IconButton
@@ -604,7 +604,7 @@ const EditCourse = () => {
         {/* Description */}
         <TextField
           fullWidth
-          label="Description"
+          label="Mô Tả"
           name="description"
           value={course.description}
           onChange={handleChange}
@@ -623,7 +623,7 @@ const EditCourse = () => {
         {/* TinyMCE Editor */}
         <Box sx={{ mb: 4 }}>
           <Box sx={{ mb: 2 }}>
-            <Typography variant="body1" fontWeight="medium">Course Content</Typography>
+            <Typography variant="body1" fontWeight="medium">Nội Dung Khóa Học</Typography>
           </Box>
           
           <Paper 
@@ -638,7 +638,7 @@ const EditCourse = () => {
           >
             <Box sx={{ p: 1, borderBottom: '1px solid #e0e0e0', bgcolor: '#f5f5f5' }}>
               <Typography variant="body2" color="text.secondary">
-                WYSIWYG Editor
+                Trình Soạn Thảo WYSIWYG
               </Typography>
             </Box>
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
@@ -688,7 +688,7 @@ const EditCourse = () => {
         {/* Duration */}
         <TextField
           fullWidth
-          label="Duration (hours)"
+          label="Thời Lượng (giờ)"
           name="duration"
           type="number"
           value={course.duration}
@@ -711,7 +711,7 @@ const EditCourse = () => {
         {/* Modules section */}
         <Box sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h6">Modules</Typography>
+            <Typography variant="h6">Mô-đun</Typography>
             <Button
               variant="outlined"
               startIcon={<AddIcon />}
@@ -727,7 +727,7 @@ const EditCourse = () => {
                 transition: 'all 0.2s ease'
               }}
             >
-              Add Module
+              Thêm Mô-đun
             </Button>
           </Box>
           
@@ -762,7 +762,7 @@ const EditCourse = () => {
               {/* Module order_index field */}
               <TextField
                 fullWidth
-                label="Order Index"
+                label="Thứ Tự"
                 type="number"
                 value={module.orderIndex}
                 InputProps={{
@@ -781,7 +781,7 @@ const EditCourse = () => {
               {/* Module title field */}
               <TextField
                 fullWidth
-                label="Module Title"
+                label="Tên Mô-đun"
                 value={module.title}
                 onChange={(e) => updateModule(moduleIndex, 'title', e.target.value)}
                 variant="outlined"
@@ -811,7 +811,7 @@ const EditCourse = () => {
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  Add Video
+                  Thêm Video
                 </Button>
               </Box>
               
@@ -848,7 +848,7 @@ const EditCourse = () => {
                   {/* Video title */}
                   <TextField
                     fullWidth
-                    label="Video Title"
+                    label="Tên Video"
                     value={video.title}
                     onChange={(e) => updateVideo(moduleIndex, videoIndex, 'title', e.target.value)}
                     variant="outlined"
@@ -864,7 +864,7 @@ const EditCourse = () => {
                   {/* Video URL */}
                   <TextField
                     fullWidth
-                    label="Video URL"
+                    label="URL Video"
                     value={video.videoUrl}
                     onChange={(e) => updateVideo(moduleIndex, videoIndex, 'videoUrl', e.target.value)}
                     variant="outlined"
@@ -899,7 +899,7 @@ const EditCourse = () => {
               transition: 'all 0.2s ease'
             }}
           >
-            Save Draft
+            Lưu Nháp
           </Button>
           <Button
             type="submit"
@@ -917,14 +917,14 @@ const EditCourse = () => {
               boxShadow: '0 3px 8px rgba(5, 150, 105, 0.2)'
             }}
           >
-            {isSubmitting ? 'Processing...' : 'Update Course'}
+            {isSubmitting ? 'Đang xử lý...' : 'Cập Nhật Khóa Học'}
           </Button>
         </Box>
       </Box>
       
       {lastSaved && (
         <Typography variant="caption" color="text.secondary" align="center" sx={{ mt: 2, display: 'block' }}>
-          Last auto-save: {lastSaved.toLocaleTimeString()}
+          Lưu tự động lần cuối: {lastSaved.toLocaleTimeString()}
         </Typography>
       )}
       

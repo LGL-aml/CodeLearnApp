@@ -264,7 +264,7 @@ const Login = ({ updateUserInfo }) => {
             <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
               <ComputerIcon sx={{ mr: 1, fontSize: 32, color: '#3b82f6' }} />
               <Typography variant="h5" component="div" sx={{ fontWeight: 700, color: 'white' }}>
-                CodeLearn Pro
+                Quản Lý Khóa Học
               </Typography>
             </Box>
             <Typography variant="h4" component="h1" sx={{ marginBottom: '10px', color: '#58a6ff', fontWeight: 600 }}>
