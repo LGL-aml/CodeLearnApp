@@ -39,7 +39,6 @@ export const getPageTitleFromPath = (pathname) => {
     
     // Common routes
     'profile': 'Hồ Sơ Cá Nhân',
-    'change-password': 'Đổi Mật Khẩu',
     'login': 'Đăng Nhập'
   };
   

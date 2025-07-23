@@ -9,7 +9,6 @@ import CourseManagement from './pages/staff/CourseManagement';
 import CreateCourse from './pages/staff/CreateCourse';
 import EditCourse from './pages/staff/EditCourse';
 import ProfilePage from './pages/ProfilePage';
-import ChangePassword from './pages/ChangePassword';
 import { getUserInfo, isAuthenticated, checkAndRefreshToken } from './utils/auth';
 import { getPageTitleFromPath, setPageTitle } from './utils/pageTitle';
 import './App.css';
@@ -133,7 +132,6 @@ function App() {
                       <Route path="users" element={<UserManagement />} />
                       <Route path="topics" element={<TopicManagement />} />
                       <Route path="profile" element={<ProfilePage />} />
-                      <Route path="change-password" element={<ChangePassword />} />
                       <Route path="*" element={<Navigate to="/admin/users" replace />} />
                     </Routes>
                   </main>
@@ -155,7 +153,6 @@ function App() {
                       <Route path="courses/create" element={<CreateCourse />} />
                       <Route path="courses/edit/:id" element={<EditCourse />} />
                       <Route path="profile" element={<ProfilePage />} />
-                      <Route path="change-password" element={<ChangePassword />} />
                       <Route path="*" element={<Navigate to="/staff/courses" replace />} />
                     </Routes>
                   </main>
