@@ -358,16 +358,6 @@ const Login = () => {
               )}
             </Box>
 
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'flex-end', 
-              marginBottom: '20px'
-            }}>
-              <Link component={RouterLink} to="/forgot-password" variant="body2" sx={{ color: 'var(--accent-primary)', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
-                Quên mật khẩu?
-              </Link>
-            </Box>
-
             <Button 
               fullWidth 
               variant="contained"
@@ -400,63 +390,6 @@ const Login = () => {
                 </>
               ) : 'Đăng nhập'}
             </Button>
-
-            <Box sx={{
-              position: 'relative',
-              textAlign: 'center',
-              margin: '25px 0',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: '50%',
-                left: 0,
-                width: 'calc(50% - 70px)',
-                height: '1px',
-                backgroundColor: 'var(--border-primary)'
-              },
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                top: '50%',
-                right: 0,
-                width: 'calc(50% - 70px)',
-                height: '1px',
-                backgroundColor: 'var(--border-primary)'
-              }
-            }}>
-              <Typography variant="body2" sx={{ 
-                display: 'inline-block',
-                padding: '0 15px',
-                backgroundColor: 'var(--bg-secondary)',
-                position: 'relative',
-                color: 'var(--text-muted)',
-                fontSize: '0.9rem'
-              }}>
-                Hoặc đăng nhập bằng
-              </Typography>
-            </Box>
-
-            <Box sx={{ 
-              marginBottom: '25px'
-            }}>
-              <Button 
-                fullWidth 
-                variant="outlined"
-                startIcon={<CodeIcon />}
-                sx={{
-                  color: 'var(--accent-primary)',
-                  borderColor: 'var(--border-primary)',
-                  padding: '10px',
-                  '&:hover': {
-                    backgroundColor: 'rgba(88, 166, 255, 0.1)',
-                    borderColor: 'var(--accent-primary)',
-                  },
-                  textTransform: 'none',
-                }}
-              >
-                GitHub
-              </Button>
-            </Box>
 
             <Box sx={{ textAlign: 'center', marginTop: '20px' }}>
               <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>

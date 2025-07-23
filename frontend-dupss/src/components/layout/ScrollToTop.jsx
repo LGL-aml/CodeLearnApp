@@ -32,7 +32,7 @@ const ScrollToTop = () => {
 
   return (
     <div className="floating-buttons">
-      <ChatButton />
+      {/* <ChatButton /> */}
       <button 
         id="scroll-to-top" 
         title="Cuộn lên đầu trang"

@@ -766,11 +766,6 @@ function CourseLearning() {
     return `${completed} / ${total}`;
   };
 
-  const handleSurveyClick = () => {
-    // Navigate to the quiz page
-    navigate(`/courses/${id}/quiz`);
-  };
-
   const handleCertificateClick = () => {
     // Get user ID
     const user = getUserData();
@@ -802,7 +797,7 @@ function CourseLearning() {
   return (
     <Box sx={{ backgroundColor: '#0E1621', color: 'white', minHeight: '100vh' }}>
       {/* Breadcrumb */}
-      <BreadcrumbContainer>
+      <BreadcrumbContainer style={{position: 'relative', zIndex: 1}}>
         <Breadcrumbs
           separator={<NavigateNextIcon fontSize="small" sx={{ color: '#fff' }} />}
           aria-label="breadcrumb"
@@ -837,7 +832,7 @@ function CourseLearning() {
               <>Tiến độ hiện tại: <span style={{ color: courseProgress >= 100 ? '#4CAF50' : '#2D9CDB' }}>{formatProgress(courseProgress)}%</span></>
             )}
           </Typography>
-          <Typography variant="body2" sx={{ color: '#8899A6' }}>
+          <Typography variant="body2" sx={{ color: 'white' }}>
             {isCompleted || allVideosWatched ?
               "Chúc mừng bạn đã hoàn thành khóa học! Bạn có thể xem lại video tại đây để củng cố thêm kiến thức cho mình nhé!" :
               "Sau khi xem hết video với tiến độ là 100%, bạn sẽ được tham gia làm kiểm tra để có thể hoàn thành khóa học"
@@ -903,7 +898,7 @@ function CourseLearning() {
                       <SectionTitle>
                         Phần {index + 1}: {module.title}
                       </SectionTitle>
-                      <SectionInfo>
+                      <SectionInfo sx={{color: 'white'}}>
                         {getModuleCompletionCount(module)} | {module.videos ? `${module.videos.length} videos` : '0 videos'}
                       </SectionInfo>
                     </Box>
