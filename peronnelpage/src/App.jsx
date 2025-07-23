@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import HeaderAdmin from './layout/Header';
 import Login from './pages/Login';
-import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import TopicManagement from './pages/admin/TopicManagement';
 import HeaderStaff from './layout/HeaderStaff';
@@ -115,12 +114,11 @@ function App() {
                   <HeaderAdmin userName={userInfo?.fullName || "Admin"} />
                   <main className="content">
                     <Routes>
-                      <Route path="dashboard" element={<AdminDashboard />} />
                       <Route path="users" element={<UserManagement />} />
                       <Route path="topics" element={<TopicManagement />} />
                       <Route path="profile" element={<ProfilePage />} />
                       <Route path="change-password" element={<ChangePassword />} />
-                      <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+                      <Route path="*" element={<Navigate to="/admin/users" replace />} />
                     </Routes>
                   </main>
                 </>

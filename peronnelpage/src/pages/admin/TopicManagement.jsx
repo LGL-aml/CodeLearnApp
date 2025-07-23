@@ -52,42 +52,6 @@ const TopicManagement = () => {
     description: ''
   });
 
-  // Mock data for development
-  const mockTopics = [
-    {
-      id: 1,
-      topicName: 'Web Development',
-      topicDescription: 'Learn modern web development techniques',
-      creatorName: 'Admin User',
-      createdAt: '2024-01-15T08:30:00Z',
-      updatedAt: '2024-01-15T08:30:00Z'
-    },
-    {
-      id: 2,
-      topicName: 'Mobile Development',
-      topicDescription: 'Build apps for iOS and Android',
-      creatorName: 'Admin User',
-      createdAt: '2024-01-16T10:15:00Z',
-      updatedAt: '2024-01-16T10:15:00Z'
-    },
-    {
-      id: 3,
-      topicName: 'Data Science',
-      topicDescription: 'Analyze data and build machine learning models',
-      creatorName: 'Admin User',
-      createdAt: '2024-01-17T14:20:00Z',
-      updatedAt: '2024-01-17T14:20:00Z'
-    },
-    {
-      id: 4,
-      topicName: 'DevOps',
-      topicDescription: 'Learn CI/CD, Docker, and Kubernetes',
-      creatorName: 'Admin User',
-      createdAt: '2024-01-18T09:45:00Z',
-      updatedAt: '2024-01-18T09:45:00Z'
-    }
-  ];
-
   // Load data on component mount
   useEffect(() => {
     fetchTopics();
@@ -96,15 +60,16 @@ const TopicManagement = () => {
   const fetchTopics = async () => {
     try {
       setLoading(true);
-      // Try to fetch topics from API
+      // Fetch topics from API
       try {
-        const response = await apiService.getTopics();
+        const response = await apiClient.get('/topics');
         if (response.data && Array.isArray(response.data)) {
           setTopics(response.data);
         } else {
-          // Fallback to mock data if API response is not as expected
-          console.log('Using mock data for topics as the API response is not in expected format');
-          setTopics(mockTopics);
+          // Handle unexpected API response format
+          console.log('API response is not in expected format:', response.data);
+          notificationService.error('Không thể tải danh sách chủ đề: Định dạng dữ liệu không đúng');
+          setTopics([]);
         }
       } catch (apiError) {
         console.error('Error fetching topics from API:', apiError);
@@ -118,13 +83,13 @@ const TopicManagement = () => {
           notificationService.error('Không thể tải danh sách chủ đề');
         }
         
-        // Use mock data if API call fails
-        setTopics(mockTopics);
+        // Set empty topics array if API call fails
+        setTopics([]);
       }
     } catch (error) {
       console.error('Error in fetchTopics:', error);
       notificationService.error('Không thể tải danh sách chủ đề');
-      setTopics(mockTopics);
+      setTopics([]);
     } finally {
       setLoading(false);
     }
@@ -183,13 +148,13 @@ const TopicManagement = () => {
 
       if (editingTopic) {
         // Update topic
-        await apiService.updateTopic(editingTopic.id, topicData);
+        await apiClient.patch(`/admin/topic/${editingTopic.id}`, topicData);
         notificationService.success('Cập nhật chủ đề thành công!');
         handleCloseDialog();
         fetchTopics();
       } else {
         // Create new topic
-        await apiService.createTopic(topicData);
+        await apiClient.post('/admin/topic', topicData);
         notificationService.success('Tạo chủ đề thành công!');
         handleCloseDialog();
         fetchTopics();
@@ -214,7 +179,7 @@ const TopicManagement = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa chủ đề này?')) {
       try {
         setLoading(true);
-        await apiService.deleteTopic(topicId);
+        await apiClient.patch(`/admin/topic/delete/${topicId}`);
         notificationService.success('Xóa chủ đề thành công!');
         fetchTopics();
       } catch (error) {
@@ -234,11 +199,11 @@ const TopicManagement = () => {
     }
   };
 
-  // Filter topics based on search term
-  const filteredTopics = topics.filter(topic =>
-    topic.topicName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    topic.topicDescription.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter topics based on search term only
+  const filteredTopics = topics.filter(topic => {
+    return (topic.topicName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      topic.topicDescription?.toLowerCase().includes(searchTerm.toLowerCase()));
+  });
 
   // Pagination
   const paginatedTopics = filteredTopics.slice(
@@ -314,7 +279,7 @@ const TopicManagement = () => {
       {/* Search */}
       <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 3 }}>
         <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={9}>
             <TextField
               fullWidth
               placeholder="Tìm kiếm theo tên hoặc mô tả chủ đề..."
@@ -335,7 +300,7 @@ const TopicManagement = () => {
               }}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={3}>
             <Box display="flex" alignItems="center" gap={2} justifyContent="flex-end">
               <Typography variant="body2" color="text.secondary">
                 Tổng cộng: <strong>{filteredTopics.length}</strong> chủ đề
@@ -360,6 +325,7 @@ const TopicManagement = () => {
               <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Mô Tả</TableCell>
               <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Người Tạo</TableCell>
               <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Ngày Tạo</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Ngày Cập Nhật</TableCell>
               <TableCell align="center" sx={{ fontWeight: 600, color: '#1e293b' }}>Thao Tác</TableCell>
             </TableRow>
           </TableHead>
@@ -396,13 +362,18 @@ const TopicManagement = () => {
                     {topic.creatorName || 'Admin'}
                   </Typography>
                 </TableCell>
-                <TableCell>
-                  <Typography variant="body2">
-                    {new Date(topic.createdAt).toLocaleDateString('vi-VN')}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Box display="flex" justifyContent="center" gap={1}>
+                                                    <TableCell>
+                    <Typography variant="body2">
+                      {topic.createdAt || 'N/A'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {topic.updatedAt || 'N/A'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Chỉnh sửa chủ đề">
                       <IconButton
                         onClick={() => handleOpenDialog(topic)}
@@ -470,6 +441,7 @@ const TopicManagement = () => {
           color: 'white',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'center',
           gap: 2,
           py: 3
         }}>
@@ -480,7 +452,17 @@ const TopicManagement = () => {
         </DialogTitle>
 
         <DialogContent sx={{ p: 4, bgcolor: 'white' }}>
-          <Box sx={{ mb: 4, p: 3, bgcolor: '#f8f9fa', borderRadius: 2, border: '1px solid #e0e0e0' }}>
+          <Box sx={{ 
+            mb: 4, 
+            p: 3, 
+            bgcolor: '#f8f9fa', 
+            borderRadius: 2, 
+            border: '1px solid #e0e0e0',
+            textAlign: 'center',
+            width: '100%',
+            maxWidth: '500px',
+            mx: 'auto'
+          }}>
             <Typography variant="h6" sx={{ mb: 1, color: '#1e293b', fontWeight: 600 }}>
               {editingTopic ? 'Cập nhật thông tin chủ đề' : 'Thông tin chủ đề mới'}
             </Typography>
@@ -489,9 +471,9 @@ const TopicManagement = () => {
             </Typography>
           </Box>
 
-          <Grid container spacing={3}>
+          <Box sx={{ width: '100%', maxWidth: '500px', mx: 'auto' }}>
             {/* Topic Name */}
-            <Grid item xs={12}>
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 label="Tên Chủ Đề"
@@ -503,21 +485,36 @@ const TopicManagement = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <TopicIcon color="primary" />
+                      <TopicIcon color="primary" sx={{ fontSize: 20 }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
+                  width: '100%',
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
                     height: 56
+                  },
+                  '& .MuiInputLabel-root': {
+                    transform: 'translate(14px, 16px) scale(1)'
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -6px) scale(0.75)'
+                  },
+                  '& .MuiInputBase-input': {
+                    padding: '16px 14px 16px 0'
+                  },
+                  '& .MuiInputAdornment-root': {
+                    minWidth: 40,
+                    display: 'flex',
+                    justifyContent: 'center'
                   }
                 }}
               />
-            </Grid>
+            </Box>
 
             {/* Topic Description */}
-            <Grid item xs={12}>
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 label="Mô Tả"
@@ -530,18 +527,26 @@ const TopicManagement = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <DescriptionIcon color="primary" />
+                      <DescriptionIcon color="primary" sx={{ fontSize: 20 }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
+                  width: '100%',
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2
+                  },
+                  '& .MuiInputAdornment-root': {
+                    alignSelf: 'flex-start',
+                    marginTop: '16px',
+                    minWidth: 40,
+                    display: 'flex',
+                    justifyContent: 'center'
                   }
                 }}
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </DialogContent>
 
         <DialogActions
@@ -549,17 +554,19 @@ const TopicManagement = () => {
             p: 4,
             bgcolor: '#f8f9fa',
             gap: 2,
-            justifyContent: 'space-between',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             borderTop: '1px solid #e0e0e0'
           }}
         >
-          <Box>
+          <Box sx={{ width: '100%', textAlign: 'center', mb: 2 }}>
             <Typography variant="caption" color="text.secondary">
               * Các trường bắt buộc
             </Typography>
           </Box>
 
-          <Box display="flex" gap={2}>
+          <Box display="flex" gap={3} justifyContent="center">
             <Button
               onClick={handleCloseDialog}
               startIcon={<CancelIcon />}
@@ -609,9 +616,6 @@ const TopicManagement = () => {
           </Box>
         </DialogActions>
       </Dialog>
-
-      {/* Snackbar for notifications - updated for better error display */}
-      {/* The Snackbar component is removed as per the edit hint. */}
     </Box>
   );
 };

@@ -111,10 +111,14 @@ const Login = ({ updateUserInfo }) => {
     }
 
     try {
-      const response = await apiService.login({
+      console.log('Đang đăng nhập với:', { username: formData.username, password: formData.password });
+      
+      const response = await axios.post(`${API_URL}/auth/login`, {
         username: formData.username,
         password: formData.password
       });
+
+      console.log('Login response:', response.data);
 
       // Kiểm tra response có đúng định dạng mới không
       if (response.data && response.data.statusCode === 200 && response.data.data) {
@@ -126,7 +130,11 @@ const Login = ({ updateUserInfo }) => {
         
         // Gọi API lấy thông tin người dùng
         try {
-          const userResponse = await apiService.getUserInfo(response.data.data.accessToken);
+          const userResponse = await axios.post(`${API_URL}/auth/me`, { 
+            accessToken: response.data.data.accessToken 
+          });
+          
+          console.log('User info response:', userResponse.data);
           
           // Lưu thông tin người dùng
           if (userResponse.data) {
@@ -147,6 +155,7 @@ const Login = ({ updateUserInfo }) => {
           }
         } catch (err) {
           console.error('User info error:', err);
+          console.error('Error response:', err.response?.data);
           
           // Extract and show error message from API response if available
           if (err.response && err.response.data) {
@@ -159,10 +168,12 @@ const Login = ({ updateUserInfo }) => {
         }
       } else {
         // Nếu response không đúng định dạng hoặc có lỗi
+        console.error('Login response format error:', response.data);
         notificationService.error(response.data?.message || 'Đăng nhập không thành công!');
       }
     } catch (err) {
       console.error('Login error:', err);
+      console.error('Error response:', err.response?.data);
       
       // Extract and show error message from API response if available
       if (err.response && err.response.data) {
