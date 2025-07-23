@@ -208,6 +208,16 @@ const UserManagement = () => {
       return false;
     }
 
+    // Validate year of birth if provided
+    if (formData.yob) {
+      const year = parseInt(formData.yob);
+      const currentYear = new Date().getFullYear();
+      if (isNaN(year) || year < 1900 || year > currentYear) {
+        notificationService.error(`Năm sinh phải là số từ 1900 đến ${currentYear}`);
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -233,7 +243,9 @@ const UserManagement = () => {
       }
       
       if (formData.yob) {
-        formDataObj.append('yob', formData.yob);
+        // Format year as a proper date string (YYYY-01-01)
+        const formattedDate = `${formData.yob}-01-01`;
+        formDataObj.append('yob', formattedDate);
       }
       
       if (formData.address) {
@@ -809,6 +821,10 @@ const UserManagement = () => {
                 variant="outlined"
                 placeholder="1990"
                 sx={inputFieldStyle}
+                error={formData.yob && (parseInt(formData.yob) < 1900 || parseInt(formData.yob) > new Date().getFullYear())}
+                helperText={formData.yob && (parseInt(formData.yob) < 1900 || parseInt(formData.yob) > new Date().getFullYear()) 
+                  ? `Năm sinh phải từ 1900 đến ${new Date().getFullYear()}` 
+                  : "Nhập năm sinh (ví dụ: 1990)"}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">

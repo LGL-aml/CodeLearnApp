@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -44,28 +45,18 @@ import {
   Cancel as CancelIcon
 } from '@mui/icons-material';
 import apiClient from '../../services/apiService';
+import NotificationService from '../../services/NotificationService';
 
 const CourseManagement = () => {
+  const navigate = useNavigate();
   // States
   const [courses, setCourses] = useState([]);
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingCourse, setEditingCourse] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-
-  // Form state
-  const [formData, setFormData] = useState({
-    title: '',
-    topicId: '',
-    description: '',
-    content: '',
-    duration: 0,
-    coverImage: null
-  });
 
   // Load data on component mount
   useEffect(() => {
@@ -76,41 +67,23 @@ const CourseManagement = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/courses');
-      setCourses(response.data || []);
+      // Use the new API endpoint for fetching lecturer's courses
+      const response = await apiClient.get('/courses/my');
+      
+      if (response.data && Array.isArray(response.data)) {
+        setCourses(response.data);
+      } else if (response.data && Array.isArray(response.data.data)) {
+        // Handle the case where data is nested in a data property
+        setCourses(response.data.data);
+      } else {
+        console.error('Unexpected courses data format:', response.data);
+        NotificationService.error('Failed to load courses: Unexpected data format');
+        setCourses([]);
+      }
     } catch (error) {
       console.error('Error fetching courses:', error);
-      showSnackbar('Không thể tải danh sách khóa học', 'error');
-      // Mock data for development
-      setCourses([
-        {
-          id: 1,
-          title: 'React Hooks Advanced',
-          topicName: 'Frontend Development',
-          description: 'Học các React Hooks nâng cao và custom hooks',
-          duration: 120,
-          createdAt: '2024-01-15',
-          creatorName: 'John Doe'
-        },
-        {
-          id: 2,
-          title: 'Node.js API Development',
-          topicName: 'Backend Development',
-          description: 'Xây dựng RESTful API với Node.js và Express',
-          duration: 180,
-          createdAt: '2024-01-10',
-          creatorName: 'Jane Smith'
-        },
-        {
-          id: 3,
-          title: 'Python Data Science',
-          topicName: 'Data Science',
-          description: 'Phân tích dữ liệu với Python, Pandas và NumPy',
-          duration: 240,
-          createdAt: '2024-01-08',
-          creatorName: 'Mike Johnson'
-        }
-      ]);
+      NotificationService.error('Failed to load courses');
+      setCourses([]);
     } finally {
       setLoading(false);
     }
@@ -122,14 +95,7 @@ const CourseManagement = () => {
       setTopics(response.data || []);
     } catch (error) {
       console.error('Error fetching topics:', error);
-      // Mock data for development
-      setTopics([
-        { id: 1, topicName: 'Frontend Development' },
-        { id: 2, topicName: 'Backend Development' },
-        { id: 3, topicName: 'Data Science' },
-        { id: 4, topicName: 'Mobile Development' },
-        { id: 5, topicName: 'DevOps' }
-      ]);
+      setTopics([]);
     }
   };
 
@@ -141,90 +107,20 @@ const CourseManagement = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handleOpenDialog = (course = null) => {
-    if (course) {
-      setEditingCourse(course);
-      setFormData({
-        title: course.title || '',
-        topicId: course.topicId || '',
-        description: course.description || '',
-        content: course.content || '',
-        duration: course.duration || 0,
-        coverImage: null
-      });
-    } else {
-      setEditingCourse(null);
-      setFormData({
-        title: '',
-        topicId: '',
-        description: '',
-        content: '',
-        duration: 0,
-        coverImage: null
-      });
-    }
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditingCourse(null);
-    setFormData({
-      title: '',
-      topicId: '',
-      description: '',
-      content: '',
-      duration: 0,
-      coverImage: null
-    });
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSubmit = async () => {
-    try {
-      if (!formData.title || !formData.topicId || !formData.description) {
-        showSnackbar('Vui lòng điền đầy đủ thông tin bắt buộc', 'error');
-        return;
-      }
-
-      const courseData = {
-        ...formData,
-        duration: parseInt(formData.duration) || 0
-      };
-
-      if (editingCourse) {
-        // Update course
-        await apiClient.put(`/courses/${editingCourse.id}`, courseData);
-        showSnackbar('Cập nhật khóa học thành công!', 'success');
-      } else {
-        // Create new course
-        await apiClient.post('/courses', courseData);
-        showSnackbar('Tạo khóa học thành công!', 'success');
-      }
-
-      handleCloseDialog();
-      fetchCourses();
-    } catch (error) {
-      console.error('Error saving course:', error);
-      showSnackbar('Có lỗi xảy ra khi lưu khóa học', 'error');
-    }
+  const handleEditCourse = (courseId) => {
+    navigate(`/staff/courses/edit/${courseId}`);
   };
 
   const handleDelete = async (courseId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa khóa học này?')) {
+    if (window.confirm('Are you sure you want to delete this course?')) {
       try {
+        // Use the new API endpoint for deleting courses
         await apiClient.delete(`/courses/${courseId}`);
-        showSnackbar('Xóa khóa học thành công!', 'success');
-        fetchCourses();
+        NotificationService.success('Course deleted successfully!');
+        fetchCourses(); // Refresh the list
       } catch (error) {
         console.error('Error deleting course:', error);
-        showSnackbar('Có lỗi xảy ra khi xóa khóa học', 'error');
+        NotificationService.error('Failed to delete course');
       }
     }
   };
@@ -232,7 +128,7 @@ const CourseManagement = () => {
   // Filter courses based on search term
   const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    course.topicName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (course.topicName && course.topicName.toLowerCase().includes(searchTerm.toLowerCase())) ||
     course.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -254,7 +150,7 @@ const CourseManagement = () => {
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
+        <CircularProgress sx={{ color: '#059669' }} />
       </Box>
     );
   }
@@ -284,7 +180,7 @@ const CourseManagement = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
+            onClick={() => navigate('/staff/courses/create')}
             size="large"
             sx={{
               bgcolor: 'white',
@@ -357,365 +253,149 @@ const CourseManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginatedCourses.map((course, index) => (
-              <TableRow
-                key={course.id}
-                sx={{
-                  '&:hover': {
-                    bgcolor: '#f8f9fa',
-                    transform: 'scale(1.001)',
-                    transition: 'all 0.2s ease'
-                  },
-                  '&:nth-of-type(even)': {
-                    bgcolor: 'rgba(0, 0, 0, 0.02)'
-                  }
-                }}
-              >
-                <TableCell>
-                  <Box display="flex" alignItems="center">
-                    <Avatar
+            {paginatedCourses.length > 0 ? (
+              paginatedCourses.map((course, index) => (
+                <TableRow
+                  key={course.id}
+                  sx={{
+                    '&:hover': {
+                      bgcolor: '#f8f9fa',
+                      transform: 'scale(1.001)',
+                      transition: 'all 0.2s ease'
+                    },
+                    '&:nth-of-type(even)': {
+                      bgcolor: 'rgba(0, 0, 0, 0.02)'
+                    }
+                  }}
+                >
+                  <TableCell>
+                    <Box display="flex" alignItems="center">
+                      <Avatar
+                        src={course.coverImage}
+                        sx={{
+                          mr: 2,
+                          bgcolor: '#1976d2',
+                          width: 48,
+                          height: 48,
+                          boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
+                        }}
+                      >
+                        <SchoolIcon sx={{ fontSize: 24 }} />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          {course.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Tạo bởi: {course.creator || 'Staff User'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={course.topicName || "General"}
+                      size="small"
                       sx={{
-                        mr: 2,
-                        bgcolor: '#1976d2',
-                        width: 48,
-                        height: 48,
-                        boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)'
+                        bgcolor: '#e3f2fd',
+                        color: '#1976d2',
+                        fontWeight: 500
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        maxWidth: 250,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        lineHeight: 1.4
                       }}
                     >
-                      <SchoolIcon sx={{ fontSize: 24 }} />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        {course.title}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Tạo bởi: {course.creatorName || 'Staff User'}
+                      {course.description}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Box display="flex" alignItems="center">
+                      <TimeIcon sx={{ mr: 1, fontSize: 18, color: '#1976d2' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {course.duration} giờ
                       </Typography>
                     </Box>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={course.topicName}
-                    size="small"
-                    sx={{
-                      bgcolor: '#e3f2fd',
-                      color: '#1976d2',
-                      fontWeight: 500
-                    }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      maxWidth: 250,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      lineHeight: 1.4
-                    }}
-                  >
-                    {course.description}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Box display="flex" alignItems="center">
-                    <TimeIcon sx={{ mr: 1, fontSize: 18, color: '#1976d2' }} />
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {course.duration} phút
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {new Date(course.createdAt).toLocaleDateString('vi-VN')}
                     </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2">
-                    {new Date(course.createdAt).toLocaleDateString('vi-VN')}
+                  </TableCell>
+                  <TableCell align="center">
+                    <Box display="flex" justifyContent="center" gap={1}>
+                      <Tooltip title="Chỉnh sửa khóa học">
+                        <IconButton
+                          onClick={() => handleEditCourse(course.id)}
+                          sx={{
+                            color: '#059669',
+                            '&:hover': {
+                              bgcolor: 'rgba(5, 150, 105, 0.1)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Xóa khóa học">
+                        <IconButton
+                          onClick={() => handleDelete(course.id)}
+                          sx={{
+                            color: '#d32f2f',
+                            '&:hover': {
+                              bgcolor: 'rgba(211, 47, 47, 0.1)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
+                    No courses found
                   </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Box display="flex" justifyContent="center" gap={1}>
-                    <Tooltip title="Chỉnh sửa khóa học">
-                      <IconButton
-                        onClick={() => handleOpenDialog(course)}
-                        sx={{
-                          color: '#1976d2',
-                          '&:hover': {
-                            bgcolor: 'rgba(25, 118, 210, 0.1)',
-                            transform: 'scale(1.1)'
-                          },
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Xóa khóa học">
-                      <IconButton
-                        onClick={() => handleDelete(course.id)}
-                        sx={{
-                          color: '#d32f2f',
-                          '&:hover': {
-                            bgcolor: 'rgba(211, 47, 47, 0.1)',
-                            transform: 'scale(1.1)'
-                          },
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Create your first course by clicking the "Create Course" button
+                  </Typography>
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={filteredCourses.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Số hàng mỗi trang:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
-        />
+        {paginatedCourses.length > 0 && (
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredCourses.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="Số hàng mỗi trang:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
+          />
+        )}
       </TableContainer>
-
-      {/* Create/Edit Dialog */}
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        maxWidth="lg"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-          }
-        }}
-      >
-        <DialogTitle sx={{
-          bgcolor: '#1976d2',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          py: 3
-        }}>
-          <SchoolIcon sx={{ fontSize: 32 }} />
-          <Typography variant="h5" component="div">
-            {editingCourse ? 'Chỉnh Sửa Khóa Học' : 'Tạo Khóa Học Mới'}
-          </Typography>
-        </DialogTitle>
-
-        <DialogContent sx={{ p: 4, bgcolor: 'white' }}>
-          <Box sx={{ mb: 4, p: 3, bgcolor: '#f8f9fa', borderRadius: 2, border: '1px solid #e0e0e0' }}>
-            <Typography variant="h6" sx={{ mb: 1, color: '#1976d2', fontWeight: 600 }}>
-              {editingCourse ? 'Cập nhật thông tin khóa học' : 'Thông tin khóa học mới'}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Điền đầy đủ thông tin chi tiết để {editingCourse ? 'cập nhật' : 'tạo'} khóa học chất lượng
-            </Typography>
-          </Box>
-
-          <Grid container spacing={3}>
-            {/* Row 1: Title - Full width */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Tên Khóa Học"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                required
-                variant="outlined"
-                placeholder="Nhập tên khóa học..."
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SchoolIcon color="primary" />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
-                }}
-              />
-            </Grid>
-
-            {/* Row 2: Topic and Duration - Balanced layout */}
-            <Grid item xs={12} sm={7}>
-              <TextField
-                fullWidth
-                select
-                label="Chủ Đề"
-                value={formData.topicId}
-                onChange={(e) => handleInputChange('topicId', e.target.value)}
-                required
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
-                }}
-              >
-                <MenuItem value="">
-                  <em>Chọn chủ đề...</em>
-                </MenuItem>
-                {topics.map((topic) => (
-                  <MenuItem key={topic.id} value={topic.id}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Chip
-                        label={topic.topicName}
-                        size="small"
-                        variant="outlined"
-                        color="primary"
-                      />
-                    </Box>
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} sm={5}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Thời Lượng (phút)"
-                value={formData.duration}
-                onChange={(e) => handleInputChange('duration', e.target.value)}
-                variant="outlined"
-                placeholder="0"
-                InputProps={{
-                  inputProps: { min: 0, max: 999 },
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <TimeIcon color="primary" />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 56
-                  }
-                }}
-              />
-            </Grid>
-
-            {/* Row 3: Description - Optimized height */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Mô Tả Khóa Học"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                required
-                variant="outlined"
-                placeholder="Mô tả ngắn gọn về nội dung và mục tiêu của khóa học..."
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  }
-                }}
-              />
-            </Grid>
-
-            {/* Row 4: Content - Optimized height */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={6}
-                label="Nội Dung Chi Tiết"
-                value={formData.content}
-                onChange={(e) => handleInputChange('content', e.target.value)}
-                variant="outlined"
-                placeholder="Nhập nội dung chi tiết của khóa học, bao gồm các chương, bài học, mục tiêu học tập..."
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  }
-                }}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions
-          sx={{
-            p: 4,
-            bgcolor: '#f8f9fa',
-            gap: 2,
-            justifyContent: 'space-between',
-            borderTop: '1px solid #e0e0e0'
-          }}
-        >
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              * Các trường bắt buộc
-            </Typography>
-          </Box>
-
-          <Box display="flex" gap={2}>
-            <Button
-              onClick={handleCloseDialog}
-              startIcon={<CancelIcon />}
-              variant="outlined"
-              size="large"
-              sx={{
-                borderRadius: 2,
-                px: 4,
-                py: 1.5,
-                borderColor: '#d32f2f',
-                color: '#d32f2f',
-                fontWeight: 600,
-                minWidth: 140,
-                '&:hover': {
-                  borderColor: '#d32f2f',
-                  bgcolor: 'rgba(211, 47, 47, 0.04)',
-                  transform: 'translateY(-1px)'
-                },
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Hủy Bỏ
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              variant="contained"
-              startIcon={<SaveIcon />}
-              size="large"
-              sx={{
-                bgcolor: '#1976d2',
-                borderRadius: 2,
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-                minWidth: 180,
-                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
-                '&:hover': {
-                  bgcolor: '#1565c0',
-                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
-                  transform: 'translateY(-1px)'
-                },
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {editingCourse ? 'Cập Nhật Khóa Học' : 'Tạo Khóa Học'}
-            </Button>
-          </Box>
-        </DialogActions>
-      </Dialog>
 
       {/* Snackbar for notifications */}
       <Snackbar

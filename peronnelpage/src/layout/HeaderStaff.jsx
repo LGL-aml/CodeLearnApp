@@ -19,9 +19,8 @@ import {
   Logout,
   Settings,
   Code as CodeIcon,
-  Terminal as TerminalIcon,
   Computer as ComputerIcon,
-  Assignment as AssignmentIcon
+  Add as AddIcon
 } from '@mui/icons-material';
 import { getUserInfo, logout } from '../utils/auth';
 
@@ -78,8 +77,7 @@ const HeaderStaff = ({ userName }) => {
 
   const menuItems = [
     { text: 'Khóa Học', icon: <CodeIcon />, path: '/staff/courses' },
-    { text: 'Bài Giảng', icon: <TerminalIcon />, path: '/staff/lectures' },
-    { text: 'Bài Tập', icon: <AssignmentIcon />, path: '/staff/exercises' }
+    { text: 'Tạo Khóa Học', icon: <AddIcon />, path: '/staff/courses/create' }
   ];
 
   // Lấy chữ cái đầu tiên của tên người dùng để hiển thị trong Avatar nếu không có avatar

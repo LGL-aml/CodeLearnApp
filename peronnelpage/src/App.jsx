@@ -6,6 +6,8 @@ import UserManagement from './pages/admin/UserManagement';
 import TopicManagement from './pages/admin/TopicManagement';
 import HeaderStaff from './layout/HeaderStaff';
 import CourseManagement from './pages/staff/CourseManagement';
+import CreateCourse from './pages/staff/CreateCourse';
+import EditCourse from './pages/staff/EditCourse';
 import ProfilePage from './pages/ProfilePage';
 import ChangePassword from './pages/ChangePassword';
 import { getUserInfo, isAuthenticated, checkAndRefreshToken } from './utils/auth';
@@ -136,6 +138,8 @@ function App() {
                   <main className="content">
                     <Routes>
                       <Route path="courses" element={<CourseManagement />} />
+                      <Route path="courses/create" element={<CreateCourse />} />
+                      <Route path="courses/edit/:id" element={<EditCourse />} />
                       <Route path="profile" element={<ProfilePage />} />
                       <Route path="change-password" element={<ChangePassword />} />
                       <Route path="*" element={<Navigate to="/staff/courses" replace />} />
