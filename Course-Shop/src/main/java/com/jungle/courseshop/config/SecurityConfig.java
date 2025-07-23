@@ -100,7 +100,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers(WHITE_LIST).permitAll()
-                                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                                .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN")
                                 .requestMatchers("/api/lecture/**").hasAnyAuthority("LECTURER")
                                 .anyRequest().authenticated()
                 )
