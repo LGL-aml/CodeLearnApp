@@ -29,10 +29,6 @@ public class Course {
     @Column(length = 10000)
     private String content;
     private Integer duration; // Duration in minutes
-    private Double progress;
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ApprovalStatus status;
 
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
