@@ -21,8 +21,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class LecturerController {
 
-    private TopicService topicService;
-    private CourseService courseService;
+    private final TopicService topicService;
+    private final CourseService courseService;
 
 
 
