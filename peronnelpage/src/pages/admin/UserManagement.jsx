@@ -53,12 +53,12 @@ const UserManagement = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Form state
   const [formData, setFormData] = useState({
+    username: '',
     fullName: '',
     email: '',
     phone: '',
@@ -77,50 +77,6 @@ const UserManagement = () => {
     { value: 'ROLE_MEMBER', label: 'Member', color: '#3b82f6', icon: <StudentIcon />, iconComponent: StudentIcon }
   ];
 
-  // Mock data for development
-  const mockUsers = [
-    {
-      id: 1,
-      fullName: 'John Doe',
-      email: 'john.admin@codelearn.com',
-      phone: '0123456789',
-      role: 'ROLE_ADMIN',
-      isActive: true,
-      createdAt: '2024-01-15',
-      lastLogin: '2024-01-20'
-    },
-    {
-      id: 2,
-      fullName: 'Jane Smith',
-      email: 'jane.staff@codelearn.com',
-      phone: '0987654321',
-      role: 'ROLE_STAFF',
-      isActive: true,
-      createdAt: '2024-01-10',
-      lastLogin: '2024-01-19'
-    },
-    {
-      id: 3,
-      fullName: 'Mike Johnson',
-      email: 'mike.student@gmail.com',
-      phone: '0555666777',
-      role: 'ROLE_STUDENT',
-      isActive: true,
-      createdAt: '2024-01-08',
-      lastLogin: '2024-01-18'
-    },
-    {
-      id: 4,
-      fullName: 'Sarah Wilson',
-      email: 'sarah.student@gmail.com',
-      phone: '0444555666',
-      role: 'ROLE_STUDENT',
-      isActive: false,
-      createdAt: '2024-01-05',
-      lastLogin: '2024-01-15'
-    }
-  ];
-
   // Load data on component mount
   useEffect(() => {
     fetchUsers();
@@ -129,15 +85,14 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Try to fetch users from API
+      // Fetch users from API
       try {
         const response = await apiService.getUsers();
         if (response.data && Array.isArray(response.data)) {
           setUsers(response.data);
         } else {
-          // Fallback to mock data if API response is not as expected
-          console.log('Using mock data for users as the API response is not in expected format');
-          setUsers(mockUsers);
+          notificationService.error('Không thể tải danh sách người dùng: Định dạng dữ liệu không đúng');
+          setUsers([]);
         }
       } catch (apiError) {
         console.error('Error fetching users from API:', apiError);
@@ -151,13 +106,12 @@ const UserManagement = () => {
           notificationService.error('Không thể tải danh sách người dùng');
         }
         
-        // Use mock data if API call fails
-        setUsers(mockUsers);
+        setUsers([]);
       }
     } catch (error) {
       console.error('Error in fetchUsers:', error);
       notificationService.error('Không thể tải danh sách người dùng');
-      setUsers(mockUsers);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -167,6 +121,7 @@ const UserManagement = () => {
     if (user) {
       setEditingUser(user);
       setFormData({
+        username: user.username || '',
         fullName: user.fullName || '',
         email: user.email || '',
         phone: user.phone || '',
@@ -180,6 +135,7 @@ const UserManagement = () => {
     } else {
       setEditingUser(null);
       setFormData({
+        username: '',
         fullName: '',
         email: '',
         phone: '',
@@ -198,6 +154,7 @@ const UserManagement = () => {
     setOpenDialog(false);
     setEditingUser(null);
     setFormData({
+      username: '',
       fullName: '',
       email: '',
       phone: '',
@@ -218,8 +175,15 @@ const UserManagement = () => {
   };
 
   const validateForm = () => {
-    if (!formData.fullName || !formData.email || !formData.role) {
+    if (!formData.username || !formData.fullName || !formData.email || !formData.role) {
       notificationService.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return false;
+    }
+
+    // Kiểm tra username: phải có ít nhất 1 chữ cái và 1 số, không chứa khoảng trắng hoặc ký tự đặc biệt
+    const usernameRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/;
+    if (!usernameRegex.test(formData.username)) {
+      notificationService.error('Username phải có ít nhất 1 chữ cái và 1 số, không chứa khoảng trắng hoặc ký tự đặc biệt');
       return false;
     }
 
@@ -239,6 +203,11 @@ const UserManagement = () => {
       return false;
     }
 
+    if (formData.phone && !/^[0-9]{10,11}$/.test(formData.phone)) {
+      notificationService.error('Số điện thoại không hợp lệ');
+      return false;
+    }
+
     return true;
   };
 
@@ -249,7 +218,7 @@ const UserManagement = () => {
       setLoading(true);
       // Create FormData object for multipart/form-data
       const formDataObj = new FormData();
-      formDataObj.append('username', formData.email); // Using email as username
+      formDataObj.append('username', formData.username);
       formDataObj.append('fullname', formData.fullName);
       formDataObj.append('email', formData.email);
       formDataObj.append('role', formData.role.replace('ROLE_', '')); // Remove ROLE_ prefix
@@ -330,35 +299,13 @@ const UserManagement = () => {
     }
   };
 
-  const toggleUserStatus = async (userId, currentStatus) => {
-    try {
-      setLoading(true);
-      await apiClient.patch(`/users/${userId}/status`, { isActive: !currentStatus });
-      notificationService.success(`${!currentStatus ? 'Kích hoạt' : 'Vô hiệu hóa'} người dùng thành công!`);
-      fetchUsers();
-    } catch (error) {
-      console.error('Error updating user status:', error);
-      
-      // Extract and show error message from API response if available
-      if (error.response && error.response.data) {
-        const errorData = error.response.data;
-        const errorMessage = errorData.message || 'Có lỗi xảy ra khi cập nhật trạng thái';
-        notificationService.error(errorMessage);
-      } else {
-        notificationService.error('Có lỗi xảy ra khi cập nhật trạng thái');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Status toggle function removed as per request
 
-  // Filter users based on search term and role
+  // Filter users based on search term only
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.phone.includes(searchTerm);
-    const matchesRole = !roleFilter || user.role === roleFilter;
-    return matchesSearch && matchesRole;
+    return user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           (user.phone && user.phone.includes(searchTerm));
   });
 
   // Pagination
@@ -459,10 +406,10 @@ const UserManagement = () => {
         </Box>
       </Paper>
 
-      {/* Search and Filters */}
+      {/* Search */}
       <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 3 }}>
         <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={9}>
             <TextField
               fullWidth
               placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
@@ -484,28 +431,7 @@ const UserManagement = () => {
             />
           </Grid>
           <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Lọc theo vai trò</InputLabel>
-              <Select
-                value={roleFilter}
-                label="Lọc theo vai trò"
-                onChange={(e) => setRoleFilter(e.target.value)}
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="">Tất cả vai trò</MenuItem>
-                {userRoles.map((role) => (
-                  <MenuItem key={role.value} value={role.value}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {role.icon}
-                      {role.label}
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Box display="flex" alignItems="center" gap={2}>
+            <Box display="flex" alignItems="center" gap={2} justifyContent="flex-end">
               <Typography variant="body2" color="text.secondary">
                 Tổng cộng: <strong>{filteredUsers.length}</strong> người dùng
               </Typography>
@@ -526,10 +452,9 @@ const UserManagement = () => {
           <TableHead>
             <TableRow sx={{ bgcolor: '#f8f9fa' }}>
               <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Người Dùng</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Username</TableCell>
               <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Vai Trò</TableCell>
               <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Liên Hệ</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Trạng Thái</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Ngày Tạo</TableCell>
               <TableCell align="center" sx={{ fontWeight: 600, color: '#1e293b' }}>Thao Tác</TableCell>
             </TableRow>
           </TableHead>
@@ -539,11 +464,13 @@ const UserManagement = () => {
               return (
                 <TableRow
                   key={user.id}
+                  onClick={() => handleOpenDialog(user)}
                   sx={{
                     '&:hover': {
                       bgcolor: '#f8fafc',
                       transform: 'scale(1.001)',
-                      transition: 'all 0.2s ease'
+                      transition: 'all 0.2s ease',
+                      cursor: 'pointer'
                     },
                     '&:nth-of-type(even)': {
                       bgcolor: 'rgba(0, 0, 0, 0.02)'
@@ -574,6 +501,11 @@ const UserManagement = () => {
                     </Box>
                   </TableCell>
                   <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {user.username}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
                     <Chip
                       label={roleInfo.label}
                       icon={roleInfo.icon}
@@ -600,28 +532,14 @@ const UserManagement = () => {
                       )}
                     </Box>
                   </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={user.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
-                      size="small"
-                      color={user.isActive ? 'success' : 'error'}
-                      onClick={() => toggleUserStatus(user.id, user.isActive)}
-                      sx={{
-                        cursor: 'pointer',
-                        '&:hover': { opacity: 0.8 }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {new Date(user.createdAt).toLocaleDateString('vi-VN')}
-                    </Typography>
-                  </TableCell>
                   <TableCell align="center">
-                    <Box display="flex" justifyContent="center" gap={1}>
-                      <Tooltip title="Chỉnh sửa người dùng">
+                    <Box display="flex" justifyContent="center" gap={1} onClick={(e) => e.stopPropagation()}>
+                      <Tooltip title="Xem/Chỉnh sửa người dùng">
                         <IconButton
-                          onClick={() => handleOpenDialog(user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenDialog(user);
+                          }}
                           sx={{
                             color: '#3b82f6',
                             '&:hover': {
@@ -636,7 +554,10 @@ const UserManagement = () => {
                       </Tooltip>
                       <Tooltip title="Xóa người dùng">
                         <IconButton
-                          onClick={() => handleDelete(user.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(user.id);
+                          }}
                           sx={{
                             color: '#ef4444',
                             '&:hover': {
@@ -719,6 +640,30 @@ const UserManagement = () => {
 
           <Box sx={{ width: '100%', maxWidth: '500px', mx: 'auto' }}>
             {/* Thông tin cơ bản */}
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                label="Username"
+                value={formData.username}
+                onChange={(e) => handleInputChange('username', e.target.value)}
+                required
+                variant="outlined"
+                placeholder="Nhập username..."
+                error={formData.username && !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/.test(formData.username)}
+                helperText={formData.username && !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/.test(formData.username) 
+                  ? "Username phải có ít nhất 1 chữ cái và 1 số, không chứa khoảng trắng hoặc ký tự đặc biệt" 
+                  : ""}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonIcon color="primary" sx={{ fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={inputFieldStyle}
+              />
+            </Box>
+
             <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
