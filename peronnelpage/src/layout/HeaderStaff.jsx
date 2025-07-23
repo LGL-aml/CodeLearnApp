@@ -19,7 +19,6 @@ import {
   Logout,
   Settings,
   Code as CodeIcon,
-  Computer as ComputerIcon,
   Add as AddIcon
 } from '@mui/icons-material';
 import { getUserInfo, logout } from '../utils/auth';
@@ -98,9 +97,9 @@ const HeaderStaff = ({ userName }) => {
     >
       <Toolbar sx={{ py: 1 }}>
         <Box display="flex" alignItems="center" sx={{ flexGrow: 0, mr: 4 }}>
-          <ComputerIcon sx={{ mr: 1, fontSize: 28, color: '#fbbf24' }} />
+          <Box component="img" src="/favicon.svg" alt="Logo" sx={{ width: 32, height: 32, mr: 1 }} />
           <Typography variant="h6" component="div" sx={{ fontWeight: 700, color: 'white' }}>
-            CodeLearn Lecturer
+            CodeLearn Management
           </Typography>
         </Box>
 

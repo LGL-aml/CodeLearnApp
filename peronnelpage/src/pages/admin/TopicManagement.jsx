@@ -45,6 +45,8 @@ const TopicManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalFormData, setOriginalFormData] = useState({});
 
   // Form state
   const [formData, setFormData] = useState({
@@ -98,16 +100,22 @@ const TopicManagement = () => {
   const handleOpenDialog = (topic = null) => {
     if (topic) {
       setEditingTopic(topic);
-      setFormData({
+      const initialFormData = {
         name: topic.topicName || '',
         description: topic.topicDescription || ''
-      });
+      };
+      setFormData(initialFormData);
+      setOriginalFormData(initialFormData);
+      setHasChanges(false);
     } else {
       setEditingTopic(null);
-      setFormData({
+      const newFormData = {
         name: '',
         description: ''
-      });
+      };
+      setFormData(newFormData);
+      setOriginalFormData({});
+      setHasChanges(true); // Always allow creation of new topics
     }
     setOpenDialog(true);
   };
@@ -119,13 +127,30 @@ const TopicManagement = () => {
       name: '',
       description: ''
     });
+    setOriginalFormData({});
+    setHasChanges(false);
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [field]: value
-    }));
+    };
+    
+    setFormData(newFormData);
+    
+    // Check if there are changes compared to original data
+    if (editingTopic) {
+      // For editing, compare with original data
+      const hasAnyChange = Object.keys(originalFormData).some(key => {
+        return newFormData[key] !== originalFormData[key];
+      });
+      
+      setHasChanges(hasAnyChange);
+    } else {
+      // For new topic, always allow submission
+      setHasChanges(true);
+    }
   };
 
   const validateForm = () => {
@@ -331,23 +356,36 @@ const TopicManagement = () => {
           </TableHead>
           <TableBody>
             {paginatedTopics.map((topic) => (
-              <TableRow
+              <Tooltip 
+                title="Nhấn để xem chi tiết và chỉnh sửa" 
+                placement="top"
+                arrow
                 key={topic.id}
-                sx={{
-                  '&:hover': {
-                    bgcolor: '#f8fafc',
-                    transform: 'scale(1.001)',
-                    transition: 'all 0.2s ease'
-                  },
-                  '&:nth-of-type(even)': {
-                    bgcolor: 'rgba(0, 0, 0, 0.02)'
-                  }
-                }}
               >
+                <TableRow
+                  onClick={() => handleOpenDialog(topic)}
+                  sx={{
+                    '&:hover': {
+                      bgcolor: '#f1f5f9',
+                      transform: 'scale(1.001)',
+                      transition: 'all 0.2s ease',
+                      cursor: 'pointer',
+                      '& .MuiTableCell-root': {
+                        color: '#1e40af'
+                      },
+                      '& .topic-name': {
+                        color: '#2563eb'
+                      }
+                    },
+                    '&:nth-of-type(even)': {
+                      bgcolor: 'rgba(0, 0, 0, 0.02)'
+                    }
+                  }}
+                >
                 <TableCell>
                   <Box display="flex" alignItems="center">
                     <TopicIcon sx={{ mr: 2, color: '#3b82f6' }} />
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    <Typography variant="subtitle1" className="topic-name" sx={{ fontWeight: 600 }}>
                       {topic.topicName}
                     </Typography>
                   </Box>
@@ -362,21 +400,24 @@ const TopicManagement = () => {
                     {topic.creatorName || 'Admin'}
                   </Typography>
                 </TableCell>
-                                                    <TableCell>
-                    <Typography variant="body2">
-                      {topic.createdAt || 'N/A'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {topic.updatedAt || 'N/A'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Box display="flex" justifyContent="center" gap={1}>
+                <TableCell>
+                  <Typography variant="body2">
+                    {topic.createdAt || 'N/A'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2">
+                    {topic.updatedAt || 'N/A'}
+                  </Typography>
+                </TableCell>
+                <TableCell align="center">
+                  <Box display="flex" justifyContent="center" gap={1} onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Chỉnh sửa chủ đề">
                       <IconButton
-                        onClick={() => handleOpenDialog(topic)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenDialog(topic);
+                        }}
                         sx={{
                           color: '#3b82f6',
                           '&:hover': {
@@ -391,7 +432,10 @@ const TopicManagement = () => {
                     </Tooltip>
                     <Tooltip title="Xóa chủ đề">
                       <IconButton
-                        onClick={() => handleDelete(topic.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(topic.id);
+                        }}
                         sx={{
                           color: '#ef4444',
                           '&:hover': {
@@ -407,6 +451,7 @@ const TopicManagement = () => {
                   </Box>
                 </TableCell>
               </TableRow>
+            </Tooltip>
             ))}
           </TableBody>
         </Table>
@@ -564,6 +609,11 @@ const TopicManagement = () => {
             <Typography variant="caption" color="text.secondary">
               * Các trường bắt buộc
             </Typography>
+            {editingTopic && !hasChanges && (
+              <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
+                Chưa có thay đổi nào để cập nhật
+              </Typography>
+            )}
           </Box>
 
           <Box display="flex" gap={3} justifyContent="center">
@@ -595,6 +645,7 @@ const TopicManagement = () => {
               variant="contained"
               startIcon={<SaveIcon />}
               size="large"
+              disabled={loading || (editingTopic && !hasChanges)}
               sx={{
                 bgcolor: '#1e293b',
                 borderRadius: 2,
@@ -608,7 +659,11 @@ const TopicManagement = () => {
                   boxShadow: '0 6px 16px rgba(30, 41, 59, 0.4)',
                   transform: 'translateY(-1px)'
                 },
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                '&.Mui-disabled': {
+                  bgcolor: '#94a3b8',
+                  color: 'white'
+                }
               }}
             >
               {editingTopic ? 'Cập Nhật' : 'Tạo Chủ Đề'}

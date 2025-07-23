@@ -55,6 +55,8 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalFormData, setOriginalFormData] = useState({});
 
   // Form state
   const [formData, setFormData] = useState({
@@ -88,12 +90,29 @@ const UserManagement = () => {
       // Fetch users from API
       try {
         const response = await apiService.getUsers();
+        console.log('Users API response:', response);
+        
+        // Handle different response formats
+        let userData;
         if (response.data && Array.isArray(response.data)) {
-          setUsers(response.data);
+          userData = response.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          userData = response.data.data;
+        } else if (response.originalData && response.originalData.data && Array.isArray(response.originalData.data)) {
+          userData = response.originalData.data;
         } else {
           notificationService.error('Không thể tải danh sách người dùng: Định dạng dữ liệu không đúng');
           setUsers([]);
+          return;
         }
+        
+        // Ensure role has ROLE_ prefix
+        userData = userData.map(user => ({
+          ...user,
+          role: user.role && !user.role.startsWith('ROLE_') ? `ROLE_${user.role}` : user.role
+        }));
+        
+        setUsers(userData);
       } catch (apiError) {
         console.error('Error fetching users from API:', apiError);
         
@@ -117,24 +136,83 @@ const UserManagement = () => {
     }
   };
 
-  const handleOpenDialog = (user = null) => {
+  const handleOpenDialog = async (user = null) => {
     if (user) {
-      setEditingUser(user);
-      setFormData({
-        username: user.username || '',
-        fullName: user.fullName || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        gender: user.gender || '',
-        yob: user.yob || '',
-        address: user.address || '',
-        role: user.role || '',
-        password: '',
-        confirmPassword: ''
-      });
+      setLoading(true);
+      try {
+        // Instead of fetching from API, use the user data we already have
+        // This avoids the 404 error if the API endpoint is not available
+        console.log('User data for editing:', user);
+        
+        // Process the user data
+        const userDetails = user;
+        
+        // Parse date properly - keep the full date
+        let yearOfBirth = '';
+        if (userDetails.yob) {
+          try {
+            if (typeof userDetails.yob === 'string') {
+              // Keep the full date as is
+              yearOfBirth = userDetails.yob;
+            } else {
+              // Convert to string if it's not already
+              yearOfBirth = userDetails.yob.toString();
+            }
+          } catch (e) {
+            console.error('Error parsing date:', e);
+            yearOfBirth = '';
+          }
+        }
+        
+        // Ensure role has ROLE_ prefix
+        const role = userDetails.role && !userDetails.role.startsWith('ROLE_') 
+          ? `ROLE_${userDetails.role}` 
+          : userDetails.role;
+        
+        const initialFormData = {
+          username: userDetails.username || '',
+          fullName: userDetails.fullName || userDetails.fullname || '',
+          email: userDetails.email || '',
+          phone: userDetails.phone || '',
+          gender: userDetails.gender || '',
+          yob: yearOfBirth,
+          address: userDetails.address || '',
+          role: role || '',
+          password: '',
+          confirmPassword: ''
+        };
+        
+        setEditingUser(userDetails);
+        setFormData(initialFormData);
+        setOriginalFormData(initialFormData);
+        setHasChanges(false);
+      } catch (error) {
+        console.error('Error processing user details:', error);
+        notificationService.error('Không thể tải thông tin người dùng');
+        
+        // Fallback to basic info
+        setEditingUser(user);
+        const fallbackData = {
+          username: user.username || '',
+          fullName: user.fullName || user.fullname || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          gender: user.gender || '',
+          yob: user.yob || '',
+          address: user.address || '',
+          role: user.role || '',
+          password: '',
+          confirmPassword: ''
+        };
+        setFormData(fallbackData);
+        setOriginalFormData(fallbackData);
+        setHasChanges(false);
+      } finally {
+        setLoading(false);
+      }
     } else {
       setEditingUser(null);
-      setFormData({
+      const newFormData = {
         username: '',
         fullName: '',
         email: '',
@@ -145,7 +223,10 @@ const UserManagement = () => {
         role: '',
         password: '',
         confirmPassword: ''
-      });
+      };
+      setFormData(newFormData);
+      setOriginalFormData({});
+      setHasChanges(true); // Always allow creation of new users
     }
     setOpenDialog(true);
   };
@@ -165,13 +246,37 @@ const UserManagement = () => {
       password: '',
       confirmPassword: ''
     });
+    setOriginalFormData({});
+    setHasChanges(false);
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [field]: value
-    }));
+    };
+    
+    setFormData(newFormData);
+    
+    // Check if there are changes compared to original data
+    if (editingUser) {
+      // For editing, compare with original data
+      const hasAnyChange = Object.keys(originalFormData).some(key => {
+        // Skip password fields if they're empty
+        if ((key === 'password' || key === 'confirmPassword') && !newFormData[key]) {
+          return false;
+        }
+        return newFormData[key] !== originalFormData[key];
+      });
+      
+      // Also consider password a change if it's not empty
+      const passwordChanged = newFormData.password && newFormData.password === newFormData.confirmPassword;
+      
+      setHasChanges(hasAnyChange || passwordChanged);
+    } else {
+      // For new user, always allow submission
+      setHasChanges(true);
+    }
   };
 
   const validateForm = () => {
@@ -208,16 +313,6 @@ const UserManagement = () => {
       return false;
     }
 
-    // Validate year of birth if provided
-    if (formData.yob) {
-      const year = parseInt(formData.yob);
-      const currentYear = new Date().getFullYear();
-      if (isNaN(year) || year < 1900 || year > currentYear) {
-        notificationService.error(`Năm sinh phải là số từ 1900 đến ${currentYear}`);
-        return false;
-      }
-    }
-
     return true;
   };
 
@@ -243,9 +338,8 @@ const UserManagement = () => {
       }
       
       if (formData.yob) {
-        // Format year as a proper date string (YYYY-01-01)
-        const formattedDate = `${formData.yob}-01-01`;
-        formDataObj.append('yob', formattedDate);
+        // Use the full date as is
+        formDataObj.append('yob', formData.yob);
       }
       
       if (formData.address) {
@@ -258,15 +352,25 @@ const UserManagement = () => {
         formDataObj.append('confirmPassword', formData.confirmPassword);
       }
 
+      // Log FormData content for debugging
+      console.log('Form data being submitted:');
+      for (let pair of formDataObj.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
+
       if (editingUser) {
         // Update user
-        await apiService.updateUser(editingUser.id, formDataObj);
+        console.log(`Updating user with ID: ${editingUser.id}`);
+        const response = await apiService.updateUser(editingUser.id, formDataObj);
+        console.log('Update user response:', response);
         notificationService.success('Cập nhật người dùng thành công!');
         handleCloseDialog();
         fetchUsers();
       } else {
         // Create new user
-        await apiService.createUser(formDataObj);
+        console.log('Creating new user');
+        const response = await apiService.createUser(formDataObj);
+        console.log('Create user response:', response);
         notificationService.success('Tạo người dùng thành công!');
         handleCloseDialog();
         fetchUsers();
@@ -336,7 +440,13 @@ const UserManagement = () => {
   };
 
   const getRoleInfo = (role) => {
-    return userRoles.find(r => r.value === role) || { label: role, color: '#6b7280', icon: <PersonIcon />, iconComponent: PersonIcon };
+    // Ensure role is a string and normalize it to have ROLE_ prefix
+    if (!role) return { label: 'Unknown', color: '#6b7280', icon: <PersonIcon />, iconComponent: PersonIcon };
+    
+    const normalizedRole = typeof role === 'string' && !role.startsWith('ROLE_') ? `ROLE_${role}` : role;
+    
+    return userRoles.find(r => r.value === normalizedRole) || 
+           { label: role, color: '#6b7280', icon: <PersonIcon />, iconComponent: PersonIcon };
   };
 
   // Common styles for form fields
@@ -631,283 +741,294 @@ const UserManagement = () => {
         </DialogTitle>
 
         <DialogContent sx={{ p: 4, bgcolor: 'white' }}>
-          <Box sx={{ 
-            mb: 4, 
-            p: 3, 
-            bgcolor: '#f8f9fa', 
-            borderRadius: 2, 
-            border: '1px solid #e0e0e0',
-            textAlign: 'center',
-            width: '100%',
-            maxWidth: '500px',
-            mx: 'auto'
-          }}>
-            <Typography variant="h6" sx={{ mb: 1, color: '#1e293b', fontWeight: 600 }}>
-              {editingUser ? 'Cập nhật thông tin người dùng' : 'Thông tin người dùng mới'}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Điền đầy đủ thông tin để {editingUser ? 'cập nhật' : 'tạo'} tài khoản người dùng
-            </Typography>
-          </Box>
+          {loading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
+              <CircularProgress size={60} />
+            </Box>
+          ) : (
+            <>
+              <Box sx={{ 
+                mb: 4, 
+                p: 3, 
+                bgcolor: '#f8f9fa', 
+                borderRadius: 2, 
+                border: '1px solid #e0e0e0',
+                textAlign: 'center',
+                width: '100%',
+                maxWidth: '500px',
+                mx: 'auto'
+              }}>
+                <Typography variant="h6" sx={{ mb: 1, color: '#1e293b', fontWeight: 600 }}>
+                  {editingUser ? 'Cập nhật thông tin người dùng' : 'Thông tin người dùng mới'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Điền đầy đủ thông tin để {editingUser ? 'cập nhật' : 'tạo'} tài khoản người dùng
+                </Typography>
+              </Box>
 
-          <Box sx={{ width: '100%', maxWidth: '500px', mx: 'auto' }}>
-            {/* Thông tin cơ bản */}
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                label="Username"
-                value={formData.username}
-                onChange={(e) => handleInputChange('username', e.target.value)}
-                required
-                variant="outlined"
-                placeholder="Nhập username..."
-                error={formData.username && !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/.test(formData.username)}
-                helperText={formData.username && !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/.test(formData.username) 
-                  ? "Username phải có ít nhất 1 chữ cái và 1 số, không chứa khoảng trắng hoặc ký tự đặc biệt" 
-                  : ""}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonIcon color="primary" sx={{ fontSize: 20 }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={inputFieldStyle}
-              />
-            </Box>
+              <Box sx={{ width: '100%', maxWidth: '500px', mx: 'auto' }}>
+                {/* Thông tin cơ bản */}
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Username"
+                    value={formData.username}
+                    onChange={(e) => handleInputChange('username', e.target.value)}
+                    required
+                    variant="outlined"
+                    placeholder="Nhập username..."
+                    disabled={!!editingUser} // Disable when editing
+                    error={formData.username && !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/.test(formData.username)}
+                    helperText={formData.username && !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/.test(formData.username) 
+                      ? "Username phải có ít nhất 1 chữ cái và 1 số, không chứa khoảng trắng hoặc ký tự đặc biệt" 
+                      : editingUser ? "Username không thể thay đổi" : ""}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonIcon color="primary" sx={{ fontSize: 20 }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={inputFieldStyle}
+                  />
+                </Box>
 
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                label="Họ và Tên"
-                value={formData.fullName}
-                onChange={(e) => handleInputChange('fullName', e.target.value)}
-                required
-                variant="outlined"
-                placeholder="Nhập họ và tên..."
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonIcon color="primary" sx={{ fontSize: 20 }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={inputFieldStyle}
-              />
-            </Box>
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Họ và Tên"
+                    value={formData.fullName}
+                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    required
+                    variant="outlined"
+                    placeholder="Nhập họ và tên..."
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonIcon color="primary" sx={{ fontSize: 20 }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={inputFieldStyle}
+                  />
+                </Box>
 
-            {/* Email */}
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                required
-                variant="outlined"
-                placeholder="user@example.com"
-                error={formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)}
-                helperText={formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) ? "Email không hợp lệ" : ""}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailIcon color="primary" sx={{ fontSize: 20 }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={inputFieldStyle}
-              />
-            </Box>
+                {/* Email */}
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    required
+                    variant="outlined"
+                    placeholder="user@example.com"
+                    error={formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)}
+                    helperText={formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) ? "Email không hợp lệ" : ""}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailIcon color="primary" sx={{ fontSize: 20 }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={inputFieldStyle}
+                  />
+                </Box>
 
-            {/* Phone */}
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                label="Số Điện Thoại"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                variant="outlined"
-                placeholder="0123456789"
-                error={formData.phone && !/^[0-9]{10,11}$/.test(formData.phone)}
-                helperText={formData.phone && !/^[0-9]{10,11}$/.test(formData.phone) ? "Số điện thoại không hợp lệ" : ""}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PhoneIcon color="primary" sx={{ fontSize: 20 }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={inputFieldStyle}
-              />
-            </Box>
-            
-            {/* Role */}
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                select
-                label="Vai Trò"
-                value={formData.role}
-                onChange={(e) => handleInputChange('role', e.target.value)}
-                required
-                variant="outlined"
-                sx={{
-                  ...inputFieldStyle,
-                  '& .MuiSelect-select': {
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }
-                }}
-                                  InputProps={{
-                  startAdornment: formData.role ? (
-                    <InputAdornment position="start" sx={{ minWidth: 28 }}>
-                      {(() => {
-                        const RoleIcon = getRoleInfo(formData.role).iconComponent;
-                        return <RoleIcon color="primary" sx={{ fontSize: 20 }} />;
-                      })()}
-                    </InputAdornment>
-                  ) : null,
-                }}
-              >
-                {userRoles.map((role) => (
-                  <MenuItem key={role.value} value={role.value}>
-                    <Typography>{role.label}</Typography>
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
+                {/* Phone */}
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Số Điện Thoại"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    variant="outlined"
+                    placeholder="0123456789"
+                    error={formData.phone && !/^[0-9]{10,11}$/.test(formData.phone)}
+                    helperText={formData.phone && !/^[0-9]{10,11}$/.test(formData.phone) ? "Số điện thoại không hợp lệ" : ""}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PhoneIcon color="primary" sx={{ fontSize: 20 }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={inputFieldStyle}
+                  />
+                </Box>
+                
+                {/* Role */}
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Vai Trò"
+                    value={formData.role}
+                    onChange={(e) => handleInputChange('role', e.target.value)}
+                    required
+                    variant="outlined"
+                    sx={{
+                      ...inputFieldStyle,
+                      '& .MuiSelect-select': {
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }
+                    }}
+                    InputProps={{
+                      startAdornment: formData.role ? (
+                        <InputAdornment position="start" sx={{ minWidth: 28 }}>
+                          {(() => {
+                            const roleInfo = getRoleInfo(formData.role);
+                            if (roleInfo && roleInfo.iconComponent) {
+                              const RoleIcon = roleInfo.iconComponent;
+                              return <RoleIcon color="primary" sx={{ fontSize: 20 }} />;
+                            }
+                            return <PersonIcon color="primary" sx={{ fontSize: 20 }} />;
+                          })()}
+                        </InputAdornment>
+                      ) : null,
+                    }}
+                  >
+                    {userRoles.map((role) => (
+                      <MenuItem key={role.value} value={role.value}>
+                        <Typography>{role.label}</Typography>
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
 
-            {/* Gender */}
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                select
-                label="Giới Tính"
-                value={formData.gender}
-                onChange={(e) => handleInputChange('gender', e.target.value)}
-                variant="outlined"
-                sx={{
-                  ...inputFieldStyle,
-                  '& .MuiSelect-select': {
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }
-                }}
-                InputProps={{
-                  startAdornment: formData.gender ? (
-                    <InputAdornment position="start" sx={{ minWidth: 28 }}>
-                      <PersonIcon color="primary" sx={{ fontSize: 20 }} />
-                    </InputAdornment>
-                  ) : null,
-                }}
-              >
-                <MenuItem value="MALE">Nam</MenuItem>
-                <MenuItem value="FEMALE">Nữ</MenuItem>
-                <MenuItem value="OTHER">Khác</MenuItem>
-              </TextField>
-            </Box>
+                {/* Gender */}
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Giới Tính"
+                    value={formData.gender}
+                    onChange={(e) => handleInputChange('gender', e.target.value)}
+                    variant="outlined"
+                    sx={{
+                      ...inputFieldStyle,
+                      '& .MuiSelect-select': {
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }
+                    }}
+                    InputProps={{
+                      startAdornment: formData.gender ? (
+                        <InputAdornment position="start" sx={{ minWidth: 28 }}>
+                          <PersonIcon color="primary" sx={{ fontSize: 20 }} />
+                        </InputAdornment>
+                      ) : null,
+                    }}
+                  >
+                    <MenuItem value="MALE">Nam</MenuItem>
+                    <MenuItem value="FEMALE">Nữ</MenuItem>
+                    <MenuItem value="OTHER">Khác</MenuItem>
+                  </TextField>
+                </Box>
 
-            {/* Year of Birth */}
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                label="Năm Sinh"
-                type="number"
-                value={formData.yob}
-                onChange={(e) => handleInputChange('yob', e.target.value)}
-                variant="outlined"
-                placeholder="1990"
-                sx={inputFieldStyle}
-                error={formData.yob && (parseInt(formData.yob) < 1900 || parseInt(formData.yob) > new Date().getFullYear())}
-                helperText={formData.yob && (parseInt(formData.yob) < 1900 || parseInt(formData.yob) > new Date().getFullYear()) 
-                  ? `Năm sinh phải từ 1900 đến ${new Date().getFullYear()}` 
-                  : "Nhập năm sinh (ví dụ: 1990)"}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Typography variant="body1" color="primary" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
-                        #
-                      </Typography>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Box>
+                {/* Year of Birth */}
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Năm Sinh"
+                    type="date"
+                    value={formData.yob}
+                    onChange={(e) => handleInputChange('yob', e.target.value)}
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    sx={inputFieldStyle}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography variant="body1" color="primary" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
+                            📅
+                          </Typography>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
 
-            {/* Address */}
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                label="Địa Chỉ"
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                variant="outlined"
-                placeholder="Nhập địa chỉ..."
-                sx={inputFieldStyle}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box component="span" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
-                        🏠
-                      </Box>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Box>
+                {/* Address */}
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Địa Chỉ"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    variant="outlined"
+                    placeholder="Nhập địa chỉ..."
+                    sx={inputFieldStyle}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Box component="span" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
+                            🏠
+                          </Box>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
 
-            {/* Password fields */}
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                type="password"
-                label={editingUser ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu"}
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                required={!editingUser}
-                variant="outlined"
-                placeholder="Nhập mật khẩu..."
-                sx={inputFieldStyle}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box component="span" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
-                        🔒
-                      </Box>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Box>
+                {/* Password fields */}
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    type="password"
+                    label={editingUser ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu"}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    required={!editingUser}
+                    variant="outlined"
+                    placeholder="Nhập mật khẩu..."
+                    sx={inputFieldStyle}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Box component="span" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
+                            🔒
+                          </Box>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
 
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                type="password"
-                label={!editingUser || formData.password ? "Xác nhận mật khẩu" : "Xác nhận mật khẩu"}
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                required={!editingUser || formData.password}
-                variant="outlined"
-                placeholder="Nhập lại mật khẩu..."
-                error={formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword}
-                helperText={formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword ? "Mật khẩu không khớp" : ""}
-                sx={inputFieldStyle}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box component="span" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
-                        🔐
-                      </Box>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Box>
-          </Box>
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    type="password"
+                    label={!editingUser || formData.password ? "Xác nhận mật khẩu" : "Xác nhận mật khẩu"}
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    required={!editingUser || formData.password}
+                    variant="outlined"
+                    placeholder="Nhập lại mật khẩu..."
+                    error={formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword}
+                    helperText={formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword ? "Mật khẩu không khớp" : ""}
+                    sx={inputFieldStyle}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Box component="span" sx={{ fontSize: 20, width: 20, textAlign: 'center' }}>
+                            🔐
+                          </Box>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+              </Box>
+            </>
+          )}
         </DialogContent>
 
         <DialogActions
@@ -925,6 +1046,11 @@ const UserManagement = () => {
             <Typography variant="caption" color="text.secondary">
               * Các trường bắt buộc
             </Typography>
+            {editingUser && !hasChanges && (
+              <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
+                Chưa có thay đổi nào để cập nhật
+              </Typography>
+            )}
           </Box>
 
           <Box display="flex" gap={3} justifyContent="center">
@@ -956,6 +1082,7 @@ const UserManagement = () => {
               variant="contained"
               startIcon={<SaveIcon />}
               size="large"
+              disabled={loading || (editingUser && !hasChanges)}
               sx={{
                 bgcolor: '#1e293b',
                 borderRadius: 2,
@@ -969,10 +1096,18 @@ const UserManagement = () => {
                   boxShadow: '0 6px 16px rgba(30, 41, 59, 0.4)',
                   transform: 'translateY(-1px)'
                 },
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                '&.Mui-disabled': {
+                  bgcolor: '#94a3b8',
+                  color: 'white'
+                }
               }}
             >
-              {editingUser ? 'Cập Nhật' : 'Tạo Người Dùng'}
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                editingUser ? 'Cập Nhật' : 'Tạo Người Dùng'
+              )}
             </Button>
           </Box>
         </DialogActions>

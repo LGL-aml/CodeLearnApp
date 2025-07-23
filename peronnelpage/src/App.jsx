@@ -11,7 +11,20 @@ import EditCourse from './pages/staff/EditCourse';
 import ProfilePage from './pages/ProfilePage';
 import ChangePassword from './pages/ChangePassword';
 import { getUserInfo, isAuthenticated, checkAndRefreshToken } from './utils/auth';
+import { getPageTitleFromPath, setPageTitle } from './utils/pageTitle';
 import './App.css';
+
+// Page title component
+const PageTitle = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    const pageTitle = getPageTitleFromPath(location.pathname);
+    setPageTitle(pageTitle);
+  }, [location]);
+  
+  return null;
+};
 
 // Protected Route component
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -102,6 +115,7 @@ function App() {
   
   return (
     <Router>
+      <PageTitle />
       <div className="app">
         <Routes>
           {/* Login Route */}
