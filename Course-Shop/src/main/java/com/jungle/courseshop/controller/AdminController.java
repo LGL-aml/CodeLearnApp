@@ -45,6 +45,13 @@ public class AdminController {
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("/user/{id}")
+    public ResponseEntity<RestResponse<UserDetailResponse>> getUserById(@PathVariable Long id) {
+        UserDetailResponse user = userService.getUsersById(id);
+       RestResponse<UserDetailResponse> response = new RestResponse<>(HttpStatus.OK.value(), null, "User retrieved successfully", user);
+        return ResponseEntity.ok(response);
+    }
+
 
     @PostMapping("/topic")
     public ResponseEntity<TopicResponse> createTopic(@RequestBody TopicRequest topic) {

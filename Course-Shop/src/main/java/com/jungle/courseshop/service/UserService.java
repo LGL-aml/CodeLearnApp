@@ -168,6 +168,12 @@ public class UserService implements CommandLineRunner {
         return users.stream().map(this::mapToUserDetailResponse).collect(Collectors.toList());
     }
 
+    public UserDetailResponse getUsersById(Long userId) {
+        User user = userRepo.findByIdAndEnabledTrue(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + userId));
+        return mapToUserDetailResponse(user);
+    }
+
     public UpdateUserResponse updateUserProfile(UpdateUserRequest request) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
