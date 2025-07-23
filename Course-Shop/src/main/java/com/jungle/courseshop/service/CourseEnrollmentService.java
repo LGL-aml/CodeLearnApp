@@ -130,6 +130,11 @@ public class CourseEnrollmentService {
         CourseEnrollment enrollment = enrollmentRepository.findByUserAndCourse(user, course)
                 .orElseThrow(() -> new RuntimeException("You are not enrolled in this course"));
 
+        if (enrollment.getProgress() >= 100.0 && enrollment.getStatus() == EnrollmentStatus.COMPLETED) {
+            // Nếu đã hoàn thành, không cập nhật progress lại nữa
+            return;
+        }
+
         long totalVideos = videoCourseRepository.countByCourseModule_Course(course);
         long watchedVideos = watchedVideoRepository.countByUserAndVideo_CourseModule_Course_AndWatchedTrue(user, course);
 
@@ -142,7 +147,7 @@ public class CourseEnrollmentService {
         if (progress >= 100.0) {
             enrollment.setStatus(EnrollmentStatus.COMPLETED);
             enrollment.setCompletionDate(LocalDateTime.now());
-            emailService.sendEnrollmentSuccessEmail(user.getEmail(),
+            emailService.sendCourseCompletionEmail(user.getEmail(),
                     user.getFullname(),
                     course.getTitle(),
                     course.getDuration(),
@@ -156,8 +161,6 @@ public class CourseEnrollmentService {
                 certificate.setIssuedDate(LocalDateTime.now());
                 certificateRepository.save(certificate);
             }
-        } else {
-            enrollment.setStatus(EnrollmentStatus.IN_PROGRESS);
         }
 
         enrollmentRepository.save(enrollment);
