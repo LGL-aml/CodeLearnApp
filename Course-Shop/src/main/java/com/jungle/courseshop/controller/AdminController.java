@@ -49,47 +49,6 @@ public class AdminController {
     }
 
 
-    @PatchMapping(value = "/users/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updateUser(@PathVariable Long userId, @Valid @ModelAttribute UpdateUserRequest request) {
-        try {
-            UpdateUserResponse response = userService.updateUserProfile(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("message", "Lỗi: " + e.getMessage())
-            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @PatchMapping("/users/delete/{userId}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
-        try {
-            userService.deleteUser(userId);
-            return ResponseEntity.ok(Map.of("message", "Người dùng đã được xóa thành công"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("message", "Lỗi: " + e.getMessage())
-            );
-        }
-    }
-
-    @PatchMapping("/course/{id}/approval")
-    public ResponseEntity<?> approvalCourse(@PathVariable Long id, @RequestParam("status") ApprovalStatus status) {
-        String message = "";
-        if(status.equals(ApprovalStatus.APPROVED)) {
-            message = "Khóa học đã được phê duyệt thành công";
-        } else if(status.equals(ApprovalStatus.REJECTED)) {
-            message = "Khóa học đã bị từ chối";
-        } else {
-            message = "Trạng thái không hợp lệ";
-            return ResponseEntity.badRequest().body(message);
-        }
-        courseService.updateStatus(id, status);
-        return ResponseEntity.ok(message);
-    }
-
     @PostMapping("/topic")
     public ResponseEntity<TopicResponse> createTopic(@RequestBody TopicRequest topic) {
         TopicResponse topicRes = topicService.create(topic);
