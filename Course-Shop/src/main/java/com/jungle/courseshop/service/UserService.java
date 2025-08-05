@@ -237,6 +237,53 @@ public class UserService implements CommandLineRunner {
                 .build();
     }
 
+    @Transactional
+    public UpdateUserResponse updateUser(Long userId, UpdateUserRequest request) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + userId));
+
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail()) &&
+                userRepo.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email đã tồn tại");
+        }
+
+        if (request.getFullname() != null) {
+            user.setFullname(request.getFullname());
+        }
+        if (request.getGender() != null) {
+            user.setGender(request.getGender());
+        }
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        if (request.getAddress() != null) {
+            user.setAddress(request.getAddress());
+        }
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+        }
+
+
+        User updatedUser = userRepo.save(user);
+
+        log.info("Admin updated user: {}", updatedUser.getUsername());
+
+        return UpdateUserResponse.builder()
+
+                .id(updatedUser.getId())
+                .username(updatedUser.getUsername())
+                .fullname(updatedUser.getFullname())
+                .email(updatedUser.getEmail())
+                .phone(updatedUser.getPhone())
+                .address(updatedUser.getAddress())
+                .role(updatedUser.getRole())
+                .message("Cập nhật người dùng thành công")
+                .build();
+    }
+
     public void deleteUser(Long userId) {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + userId));

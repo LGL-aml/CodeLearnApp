@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Card, 
-  TextField, 
-  Button, 
-  Typography, 
-  Checkbox, 
-  FormControlLabel, 
-  Link, 
-  Divider, 
-  InputAdornment, 
+import {
+  Box,
+  Card,
+  TextField,
+  Button,
+  Typography,
+  Checkbox,
+  FormControlLabel,
+  Link,
+  Divider,
+  InputAdornment,
   IconButton,
   Grid,
   Alert,
@@ -41,7 +41,7 @@ const Register = () => {
     birthDate: '',
     terms: false
   });
-  
+
   // Add state to track validation errors
   const [errors, setErrors] = useState({
     username: '',
@@ -53,7 +53,7 @@ const Register = () => {
     birthDate: '',
     terms: ''
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -68,7 +68,7 @@ const Register = () => {
       ...formData,
       [name]: type === 'checkbox' ? checked : value
     });
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors({
@@ -81,13 +81,13 @@ const Register = () => {
   const validateForm = () => {
     let tempErrors = {};
     let isValid = true;
-    
+
     // Validate username
     if (!formData.username.trim()) {
       tempErrors.username = 'Vui lòng nhập tên đăng nhập';
       isValid = false;
     }
-    
+
     // Validate email
     if (!formData.email) {
       tempErrors.email = 'Vui lòng nhập địa chỉ email';
@@ -96,7 +96,7 @@ const Register = () => {
       tempErrors.email = 'Địa chỉ email không hợp lệ';
       isValid = false;
     }
-    
+
     // Validate password
     if (!formData.password) {
       tempErrors.password = 'Vui lòng nhập mật khẩu';
@@ -105,7 +105,7 @@ const Register = () => {
       tempErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
       isValid = false;
     }
-    
+
     // Validate confirm password
     if (!formData.confirmPassword) {
       tempErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
@@ -114,72 +114,77 @@ const Register = () => {
       tempErrors.confirmPassword = 'Mật khẩu không khớp';
       isValid = false;
     }
-    
+
     // Validate fullname
     if (!formData.fullname.trim()) {
       tempErrors.fullname = 'Vui lòng nhập họ và tên';
       isValid = false;
     }
-    
+
     // Validate phone
     if (!formData.phone.trim()) {
       tempErrors.phone = 'Vui lòng nhập số điện thoại';
       isValid = false;
     }
-    
+
     // Validate terms
     if (!formData.terms) {
       tempErrors.terms = 'Vui lòng đồng ý với điều khoản sử dụng';
       isValid = false;
     }
-    
+
     setErrors(tempErrors);
     return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
     if (!validateForm()) {
       return;
     }
-    
+
     // Set processing state to true
     setProcessing(true);
-    
+
     try {
-      // Format birthDate for the API if needed
+      // Extract just the year from birthDate for the API
       let yob = '';
       if (formData.birthDate) {
+        // const date = new Date(formData.birthDate);
+        // yob = date.getFullYear().toString();
         const date = new Date(formData.birthDate);
-        yob = date.getFullYear().toString();
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        yob = `${day}/${month}/${year}`;
       }
-      
+
       // Prepare payload according to API requirements
       const payload = {
         username: formData.username,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        fullname: formData.fullname, 
+        fullname: formData.fullname,
         email: formData.email,
         phone: formData.phone,
         yob: yob
       };
-      
+
       console.log('Sending registration request:', payload);
-      
+
       const response = await axios.post(
         `${API_URL}/auth/register`,
         payload
       );
-      
+
       // Set processing state to false
       setProcessing(false);
-      
+
       if (response.status === 200 || response.status === 201) {
         showSuccessAlert('Đăng ký thành công!');
-        
+
         // Redirect to login page after a short delay
         setTimeout(() => {
           navigate('/login');
@@ -188,11 +193,11 @@ const Register = () => {
     } catch (error) {
       // Set processing state to false on error
       setProcessing(false);
-      
-      const errorMessage = error.response?.data?.message || 
-                         error.response?.data?.error ||
-                         'Đã có lỗi xảy ra khi đăng ký!';
-                          
+
+      const errorMessage = error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Đã có lỗi xảy ra khi đăng ký!';
+
       showErrorAlert(errorMessage);
     }
   };
@@ -595,7 +600,7 @@ const Register = () => {
             <Box sx={{ marginBottom: '20px' }}>
               <FormControlLabel
                 control={
-                  <Checkbox 
+                  <Checkbox
                     name="terms"
                     checked={formData.terms}
                     onChange={handleChange}
@@ -618,8 +623,8 @@ const Register = () => {
               )}
             </Box>
 
-            <Button 
-              fullWidth 
+            <Button
+              fullWidth
               variant="contained"
               type="submit"
               disabled={processing}
@@ -637,14 +642,14 @@ const Register = () => {
             >
               {processing ? (
                 <>
-                  <CircularProgress 
-                    size={24} 
-                    sx={{ 
+                  <CircularProgress
+                    size={24}
+                    sx={{
                       color: 'white',
                       position: 'absolute',
                       left: '50%',
                       marginLeft: '-12px'
-                    }} 
+                    }}
                   />
                   <span style={{ visibility: 'hidden' }}>Đăng ký</span>
                 </>
@@ -654,20 +659,20 @@ const Register = () => {
             <Box sx={{ textAlign: 'center', marginTop: '20px' }}>
               <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
                 Đã có tài khoản? {' '}
-                <Button 
-                  component={RouterLink} 
+                <Button
+                  component={RouterLink}
                   to="/login"
                   variant="text"
-                  sx={{ 
-                    color: 'var(--accent-primary)', 
-                    fontWeight: 500, 
+                  sx={{
+                    color: 'var(--accent-primary)',
+                    fontWeight: 500,
                     textDecoration: 'none',
                     padding: '0 4px',
                     minWidth: 'auto',
-                    '&:hover': { 
+                    '&:hover': {
                       textDecoration: 'underline',
                       backgroundColor: 'transparent'
-                    } 
+                    }
                   }}
                 >
                   Đăng nhập ngay
@@ -678,14 +683,14 @@ const Register = () => {
         </Box>
 
         {/* Right side - Image */}
-        <Box 
+        <Box
           sx={{
             flex: 1,
             position: 'relative',
             display: { xs: 'none', md: 'block' }
           }}
         >
-          <Box 
+          <Box
             component="img"
             src="https://techcrunch.com/wp-content/uploads/2015/04/codecode.jpg?w=1024"
             alt="Lập trình"
@@ -696,7 +701,7 @@ const Register = () => {
               display: 'block'
             }}
           />
-          <Box 
+          <Box
             sx={{
               position: 'absolute',
               top: 0,
@@ -710,21 +715,21 @@ const Register = () => {
               padding: '40px'
             }}
           >
-            <Typography 
-              variant="h4" 
-              sx={{ 
-                color: 'white', 
-                fontWeight: 700, 
+            <Typography
+              variant="h4"
+              sx={{
+                color: 'white',
+                fontWeight: 700,
                 marginBottom: '20px',
                 textAlign: 'center'
               }}
             >
               Học lập trình cùng chuyên gia
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: 'white', 
+            <Typography
+              variant="body1"
+              sx={{
+                color: 'white',
                 textAlign: 'center',
                 lineHeight: 1.6
               }}

@@ -4,7 +4,6 @@ import com.jungle.courseshop.dto.request.RegisterRequest;
 import com.jungle.courseshop.dto.request.TopicRequest;
 import com.jungle.courseshop.dto.request.UpdateUserRequest;
 import com.jungle.courseshop.dto.response.*;
-import com.jungle.courseshop.entity.ApprovalStatus;
 import com.jungle.courseshop.service.CourseService;
 import com.jungle.courseshop.service.TopicService;
 import com.jungle.courseshop.service.UserService;
@@ -13,10 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -39,13 +36,25 @@ public class AdminController {
         }
     }
 
+    @PatchMapping(value="/users/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @Valid @ModelAttribute UpdateUserRequest request) {
+        try {
+            UpdateUserResponse response = userService.updateUser(id, request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("message", "Lỗi: " + e.getMessage())
+            );
+        }
+    }
+
     @GetMapping("/users")
     public ResponseEntity<List<UserDetailResponse>> getAllUsers() {
         List<UserDetailResponse> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
-    @GetMapping("/user/{id}")
+    @GetMapping("/users/{id}")
     public ResponseEntity<RestResponse<UserDetailResponse>> getUserById(@PathVariable Long id) {
         UserDetailResponse user = userService.getUsersById(id);
        RestResponse<UserDetailResponse> response = new RestResponse<>(HttpStatus.OK.value(), null, "User retrieved successfully", user);

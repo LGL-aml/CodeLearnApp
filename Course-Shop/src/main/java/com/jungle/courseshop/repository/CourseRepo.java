@@ -1,6 +1,5 @@
 package com.jungle.courseshop.repository;
 
-import com.jungle.courseshop.entity.ApprovalStatus;
 import com.jungle.courseshop.entity.Course;
 import com.jungle.courseshop.entity.User;
 import org.springframework.data.domain.Page;
