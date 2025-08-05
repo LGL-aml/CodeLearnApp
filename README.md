@@ -1,1 +1,1 @@
-# CourseShopApp
+# CourseLearnApp
